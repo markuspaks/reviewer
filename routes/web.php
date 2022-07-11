@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,4 +25,8 @@ Route::middleware('auth.bitbucket')->group(function () {
 
     Route::get('/', [ReviewController::class, 'index']);
     Route::get('/send-emails', [ReviewController::class, 'sendEmails']);
+
+
+    Route::get('configuration', [ConfigurationController::class, 'index']);
+    Route::put('configuration', [ConfigurationController::class, 'update']);
 });

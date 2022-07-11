@@ -3,6 +3,7 @@
 namespace App\Http\Services;
 
 use App\Models\PullRequest;
+use App\Models\User;
 use GrahamCampbell\Bitbucket\BitbucketManager;
 use Http\Client\Exception;
 
@@ -77,6 +78,7 @@ class Bitbucket
 
             /** @noinspection PhpUnhandledExceptionInspection */
             foreach ($this->bitbucket->workspaces($workspace['slug'])->members()->list()['values'] as $userData) {
+                $userData['user']['email'] = User::find(str_replace(['{', '}'], '', $userData['user']['uuid']))->email ?? null;
                 $users[$userData['user']['uuid']] = $userData['user'];
             }
         }
@@ -90,11 +92,12 @@ class Bitbucket
     public function getAllUsersWithAssignedPullRequests(): array
     {
         $users = $this->getAllUsers();
+        foreach ($users as $user) {
+            $user['pull_requests'] = [];
+        }
         foreach ($this->getAllPullRequests() as $pullRequest) {
             foreach ($pullRequest->getAssignees() as $assignee) {
-                if (!isset($users[$assignee['uuid']]['pull_requests'])) {
-                    $users[$assignee['uuid']]['pull_requests'] = [];
-                }
+
                 $users[$assignee['uuid']]['pull_requests'][] = $pullRequest;
             }
         }

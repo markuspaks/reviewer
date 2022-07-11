@@ -8,7 +8,6 @@
                  alt="{{ $user['nickname'] }}"
                  title="{{ $user['nickname'] }}"> {{ count($user['pull_requests']) }}
         @endforeach
-        <a href="{{ url('send-emails') }}">Send emails</a>
     </div>
 
     <div>
