@@ -1,0 +1,12 @@
+.avatar {
+    width: 30px;
+    border-radius: 50%;
+}
+
+.approved {
+    border: green solid 2px;
+}
+
+.changes {
+    border: darkorange solid 2px;
+}
