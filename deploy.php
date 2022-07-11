@@ -31,4 +31,5 @@ task('build', function () {
     run('npm run build');
 });
 
+after('artisan:migrate', 'build');
 after('deploy:failed', 'deploy:unlock');
