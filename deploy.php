@@ -27,6 +27,7 @@ host('trulla.ee')
 
 task('build', function () {
     cd('{{release_path}}');
+    run('npm install');
     run('npm run build');
 });
 
