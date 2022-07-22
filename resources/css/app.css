@@ -13,12 +13,16 @@
     border: darkorange solid 2px;
 }
 
-table.reviews td {
+.counters {
+    margin-bottom: 20px;
+}
+
+.counter {
     padding-left: 10px;
     padding-right: 10px;
 }
 
-.counter {
+table.reviews td {
     padding-left: 10px;
     padding-right: 10px;
 }
