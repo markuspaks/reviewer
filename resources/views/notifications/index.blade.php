@@ -27,7 +27,7 @@
 
             <div class="columns">
                 <div class="column has-text-right">
-                    <button class="button is-success">Save</button>
+                    <button class="button is-success">Send Emails</button>
                 </div>
             </div>
         </div>
