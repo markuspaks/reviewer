@@ -31,7 +31,7 @@ class AssignedPullRequests extends Mailable
     public function build(): static
     {
         return $this
-            ->subject('Pull request waiting for you')
+            ->subject(count($this->user['pull_requests']) . ' pull requests waiting for you')
             ->markdown('mails.assigned-pull-requests', [
             'user' => $this->user
         ]);

@@ -1,5 +1,5 @@
 @component('mail::message')
-# {{ $user['nickname'] }}, pull request waiting for you
+# {{ $user['nickname'] }}, {{ count($user['pull_requests']) }} pull requests waiting for you
 
 You need to deal with these pull requests.
 

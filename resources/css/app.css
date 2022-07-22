@@ -12,3 +12,13 @@
 .changes {
     border: darkorange solid 2px;
 }
+
+table.reviews td {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.counter {
+    padding-left: 10px;
+    padding-right: 10px;
+}

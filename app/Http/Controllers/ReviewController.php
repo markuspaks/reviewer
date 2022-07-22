@@ -15,17 +15,8 @@ class ReviewController extends Controller
     public function index(Bitbucket $bitbucket): View
     {
         return view('reviews.index', [
-            'users' => $bitbucket->getAllUsersWithAssignedPullRequests(),
+            'users' => $bitbucket->getUsersWithAssignedPullRequests($bitbucket->getAllUsers()),
             'pullRequests' => $bitbucket->getAllPullRequests()
         ]);
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function sendEmails(Bitbucket $bitbucket)
-    {
-        $sendEmails = new SendEmails();
-        $sendEmails->sendEmails($bitbucket->getAllUsersWithAssignedPullRequests());
     }
 }

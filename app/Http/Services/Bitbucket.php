@@ -67,7 +67,7 @@ class Bitbucket
         return $this->pullRequests = $pullRequests;
     }
 
-    public function getAllUsers(): array
+    public function getAllUsers(?array $uuidsFilter = null): array
     {
         if ($this->users !== null) {
             return $this->users;
@@ -78,8 +78,14 @@ class Bitbucket
 
             /** @noinspection PhpUnhandledExceptionInspection */
             foreach ($this->bitbucket->workspaces($workspace['slug'])->members()->list()['values'] as $userData) {
-                $userData['user']['email'] = User::find(str_replace(['{', '}'], '', $userData['user']['uuid']))->email ?? null;
-                $users[$userData['user']['uuid']] = $userData['user'];
+                $uuid = $userData['user']['uuid'];
+
+                if ($uuidsFilter !== null && !in_array($uuid, $uuidsFilter)) {
+                    continue;
+                }
+
+                $userData['user']['email'] = User::find(str_replace(['{', '}'], '', $uuid))->email ?? null;
+                $users[$uuid] = $userData['user'];
             }
         }
 
@@ -89,9 +95,8 @@ class Bitbucket
     /**
      * @throws Exception
      */
-    public function getAllUsersWithAssignedPullRequests(): array
+    public function getUsersWithAssignedPullRequests(array $users): array
     {
-        $users = $this->getAllUsers();
         foreach ($users as $user) {
             $user['pull_requests'] = [];
         }

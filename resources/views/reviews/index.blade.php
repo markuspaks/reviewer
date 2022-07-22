@@ -4,14 +4,16 @@
 
     <div>
         @foreach($users as $user)
-            <img class="avatar" src="{{ $user['links']['avatar']['href'] }}"
-                 alt="{{ $user['nickname'] }}"
-                 title="{{ $user['nickname'] }}"> {{ count($user['pull_requests']) }}
+            <span class="counter">
+                <img class="avatar" src="{{ $user['links']['avatar']['href'] }}"
+                     alt="{{ $user['nickname'] }}"
+                     title="{{ $user['nickname'] }}"> {{ count($user['pull_requests']) }}
+            </span>
         @endforeach
     </div>
 
     <div>
-        <table>
+        <table class="reviews">
             @foreach($pullRequests as $pullRequest)
                 <?php $pullRequestData = $pullRequest->getData(); ?>
                 <tr>

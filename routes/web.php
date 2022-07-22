@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,7 +25,8 @@ Route::middleware('auth.bitbucket')->group(function () {
     Route::get('logout', [AuthController::class, 'destroy']);
 
     Route::get('/', [ReviewController::class, 'index']);
-    Route::get('/send-emails', [ReviewController::class, 'sendEmails']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/emails', [NotificationController::class, 'sendEmails']);
 
 
     Route::get('configuration', [ConfigurationController::class, 'index']);

@@ -59,7 +59,7 @@ class PullRequest
                 $excludeParticipant = true;
                 foreach ($this->getComments() as $comment) {
                     // If comment review again is newer than participation older
-                    if ($comment['content']['raw'] === 'review again' && $comment['updated_on'] > $participant['participated_on']) {
+                    if ($this->isNeedsReviewComment($comment['content']['raw']) && $comment['updated_on'] > $participant['participated_on']) {
                         $excludeParticipant = false;
                     }
                 }
@@ -77,5 +77,18 @@ class PullRequest
         }
 
         return $users;
+    }
+
+    public function isNeedsReviewComment(string $comment): bool
+    {
+        $texts = ['review again', 'needs review'];
+        foreach ($texts as $text)
+        {
+            if (str_contains($comment, $text)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
