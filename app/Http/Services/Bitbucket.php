@@ -50,7 +50,7 @@ class Bitbucket
 
         $pullRequests = [];
         foreach ($users as $user) {
-            foreach ($this->bitbucket->pullRequests()->list($user['account_id'])['values'] as $pullRequestWithoutReviewers) {
+            foreach ($this->bitbucket->pullRequests()->list($user['account_id'], ['pagelen' => 50])['values'] as $pullRequestWithoutReviewers) {
                 [$workspace, $repository] = explode('/', $pullRequestWithoutReviewers['source']['repository']['full_name']);
                 $pullRequest = $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->show($pullRequestWithoutReviewers['id']);
                 $pullRequests[] = new PullRequest($this, $pullRequest);
