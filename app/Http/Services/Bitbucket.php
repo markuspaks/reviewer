@@ -102,7 +102,9 @@ class Bitbucket
         }
         foreach ($this->getAllPullRequests() as $pullRequest) {
             foreach ($pullRequest->getAssignees() as $assignee) {
-
+                if (!isset($users[$assignee['uuid']])) {
+                    continue;
+                }
                 $users[$assignee['uuid']]['pull_requests'][] = $pullRequest;
             }
         }
