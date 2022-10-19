@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Http\Services\Bitbucket;
+use App\Services\Bitbucket;
 use Http\Client\Exception;
 
 class PullRequest

@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Services\Bitbucket;
-use App\Http\Services\SendEmails;
+use App\Services\Bitbucket;
 use Http\Client\Exception;
 use Illuminate\Contracts\View\View;
 

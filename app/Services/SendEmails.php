@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Services;
+namespace App\Services;
 
 use App\Mail\AssignedPullRequests;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Mail;
 
 class SendEmails
 {
-    public function sendEmails(array $users): RedirectResponse
+    public function sendEmails(array $users): void
     {
         foreach ($users as $user) {
             if (!count($user['pull_requests'])) {
@@ -21,7 +20,5 @@ class SendEmails
 
             Mail::to($user['email'])->send(new AssignedPullRequests($user));
         }
-
-        return redirect()->back();
     }
 }

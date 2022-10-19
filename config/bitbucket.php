@@ -50,8 +50,8 @@ return [
 
         'alternative' => [
             'method'   => 'password',
-            'username' => 'foo',
-            'password' => 'bar',
+            'username' => env('BITBUCKET_USERNAME'),
+            'password' => env('BITBUCKET_PASSWORD'),
             // 'backoff'  => false,
             // 'cache'    => false,
             // 'url'      => null,
