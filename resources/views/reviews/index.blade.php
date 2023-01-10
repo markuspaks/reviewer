@@ -4,11 +4,11 @@
 
     <div class="counters">
         @foreach($users as $user)
-            <span class="counter">
+            <a class="counter" href="{{ route('reviews.index', ['reviewer' => $user['uuid']]) }}">
                 <img class="avatar" src="{{ $user['links']['avatar']['href'] }}"
                      alt="{{ $user['nickname'] }}"
                      title="{{ $user['nickname'] }}"> {{ count($user['pull_requests']) }}
-            </span>
+            </a>
         @endforeach
     </div>
 

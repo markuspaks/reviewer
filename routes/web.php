@@ -24,7 +24,7 @@ Route::get('/auth/callback', [AuthController::class, 'callback']);
 Route::middleware('auth.bitbucket')->group(function () {
     Route::get('logout', [AuthController::class, 'destroy']);
 
-    Route::get('/', [ReviewController::class, 'index']);
+    Route::get('/', [ReviewController::class, 'index'])->name('reviews.index');
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/emails', [NotificationController::class, 'sendEmails']);
 
