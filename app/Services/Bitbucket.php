@@ -97,8 +97,8 @@ class Bitbucket
      */
     public function getUsersWithAssignedPullRequests(array $users): array
     {
-        foreach ($users as $user) {
-            $user['pull_requests'] = [];
+        foreach ($users as $key => $user) {
+            $users[$key]['pull_requests'] = [];
         }
         foreach ($this->getAllPullRequests() as $pullRequest) {
             foreach ($pullRequest->getAssignees() as $assignee) {
