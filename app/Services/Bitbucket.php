@@ -129,6 +129,6 @@ class Bitbucket
     {
         $pullRequestData = $pullRequest->getData();
         [$workspace, $repository] = explode('/', $pullRequestData['source']['repository']['full_name']);
-        return $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->comments($pullRequestData['id'])->list()['values'];
+        return $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->comments($pullRequestData['id'])->list(['pagelen' => 100])['values'];
     }
 }

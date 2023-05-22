@@ -81,6 +81,7 @@ class PullRequest
 
     public function isNeedsReviewComment(string $comment): bool
     {
+        $comment = mb_strtolower($comment);
         $texts = ['review again', 'needs review'];
         foreach ($texts as $text)
         {
