@@ -20,6 +20,9 @@ class PullRequest
 
     protected ?array $comments = null;
 
+    protected ?array $lastPipeline = null;
+    protected bool $lastPipelineCached = false;
+
     public function __construct(Bitbucket $bitbucket, $data)
     {
         $this->bitbucket = $bitbucket;
@@ -45,7 +48,12 @@ class PullRequest
 
     public function getLastPipeline(): ?array
     {
-        return $this->bitbucket->getLastPipeline($this);
+        if ($this->lastPipelineCached) {
+            return $this->lastPipeline;
+        }
+
+        $this->lastPipelineCached = true;
+        return $this->lastPipeline = $this->bitbucket->getLastPipeline($this);
     }
 
     public function getLastPipelineState(): ?string
@@ -56,13 +64,18 @@ class PullRequest
             return null;
         }
 
-        $pipelineState = $pipeline['state']['result']['name'] ?? null;
+        $pipelineResult = $pipeline['state']['result']['name'] ?? null;
+        $pipelineStage = $pipeline['state']['stage']['name'] ?? null;
 
-        if ($pipelineState === null) {
-            return self::PIPELINE_STATE_RUNNING;
+        if ($pipelineResult === 'SUCCESSFUL' || $pipelineStage === 'PAUSED') {
+            return self::PIPELINE_STATE_SUCCESSFUL;
         }
 
-        return $pipelineState === 'SUCCESSFUL' ? self::PIPELINE_STATE_SUCCESSFUL : self::PIPELINE_STATE_FAILED;
+        if ($pipelineResult === 'FAILED') {
+            return self::PIPELINE_STATE_FAILED;
+        }
+
+        return self::PIPELINE_STATE_RUNNING;
     }
 
     public function isLastPipelineSuccessful(): ?bool
@@ -98,7 +111,9 @@ class PullRequest
                     $excludeParticipant = true;
                     foreach ($this->getComments() as $comment) {
                         // If comment review again is newer than participation older
-                        if ($this->isNeedsReviewComment($comment['content']['raw']) && $comment['updated_on'] > $participant['participated_on']) {
+                        if ($this->isNeedsReviewComment(
+                                $comment['content']['raw']
+                            ) && $comment['updated_on'] > $participant['participated_on']) {
                             $excludeParticipant = false;
                             break;
                         }
@@ -124,8 +139,7 @@ class PullRequest
     {
         $comment = mb_strtolower($comment);
         $texts = ['review again', 'needs review'];
-        foreach ($texts as $text)
-        {
+        foreach ($texts as $text) {
             if (str_contains($comment, $text)) {
                 return true;
             }

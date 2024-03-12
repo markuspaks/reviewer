@@ -46,27 +46,8 @@
                                  title="{{ $assignee['nickname'] }}">
                         @endforeach
                     </td>
-                    <td>
-                        @php($pipelineState = $pullRequest->getLastPipelineState())
-                        @if($pipelineState === PullRequest::PIPELINE_STATE_SUCCESSFUL)
-                            <span class="icon-text has-text-success">
-                              <span class="icon">
-                                <i class="fas fa-check-square">S</i>
-                              </span>
-                            </span>
-                        @elseif($pipelineState === PullRequest::PIPELINE_STATE_RUNNING)
-                            <span class="icon-text has-text-info">
-                              <span class="icon">
-                                <i class="fas fa-time">R</i>
-                              </span>
-                            </span>
-                        @elseif($pipelineState === PullRequest::PIPELINE_STATE_FAILED)
-                            <span class="icon-text has-text-danger">
-                              <span class="icon">
-                                <i class="fas fa-ban">F</i>
-                              </span>
-                            </span>
-                        @endif
+                    <td class="pipeline-state">
+                        <img src="{{ url($pullRequest->getLastPipelineState() . '.png') }}" alt="{{ $pullRequest->getLastPipelineState() }}" title="{{ $pullRequest->getLastPipelineState() }}">
                     </td>
                 </tr>
             @endforeach
