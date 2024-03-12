@@ -67,7 +67,7 @@ class Bitbucket
         return $this->pullRequests = $pullRequests;
     }
 
-    public function getAllUsers(?array $uuidsFilter = null): array
+    public function getAllUsers(): array
     {
         if ($this->users !== null) {
             return $this->users;
@@ -79,17 +79,17 @@ class Bitbucket
             /** @noinspection PhpUnhandledExceptionInspection */
             foreach ($this->bitbucket->workspaces($workspace['slug'])->members()->list()['values'] as $userData) {
                 $uuid = $userData['user']['uuid'];
-
-                if ($uuidsFilter !== null && !in_array($uuid, $uuidsFilter)) {
-                    continue;
-                }
-
                 $userData['user']['email'] = User::find(str_replace(['{', '}'], '', $uuid))->email ?? null;
                 $users[$uuid] = $userData['user'];
             }
         }
 
         return $this->users = $users;
+    }
+
+    public function getUsers(?array $uuidsFilter = null): array
+    {
+        return array_filter($this->getAllUsers(), fn($key) => in_array($key, $uuidsFilter), ARRAY_FILTER_USE_KEY);
     }
 
     /**
@@ -129,6 +129,23 @@ class Bitbucket
     {
         $pullRequestData = $pullRequest->getData();
         [$workspace, $repository] = explode('/', $pullRequestData['source']['repository']['full_name']);
-        return $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->comments($pullRequestData['id'])->list(['pagelen' => 100])['values'];
+        $response = $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->comments($pullRequestData['id'])->list([
+            'sort' => '-updated_on',
+            'pagelen' => 100,
+        ]);
+        return $response['values'];
+    }
+
+    public function getLastPipeline(PullRequest $pullRequest): ?array
+    {
+        $pullRequestData = $pullRequest->getData();
+        [$workspace, $repository] = explode('/', $pullRequestData['source']['repository']['full_name']);
+        $list = $this->bitbucket->repositories()->workspaces($workspace)->pipelines($repository)->list([
+            'target.branch' => $pullRequest->getData()['source']['branch']['name'],
+            'sort' => '-created_on',
+            'pagelen' => 1,
+        ]);
+
+        return $list['values'][0] ?? null;
     }
 }

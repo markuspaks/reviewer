@@ -4,12 +4,12 @@
 You need to deal with these pull requests.
 
 @component('mail::table')
-    | Author        | Title         | Updated  |
-    | ------------- | ------------- | --------:|
-    @foreach($user['pull_requests'] as $pullRequest)
-        <?php $pullRequestData = $pullRequest->getData(); ?>
-    | <img style="width: 30px; border-radius: 50%;" src="{{ $pullRequestData['author']['links']['avatar']['href'] }}" alt="{{ $pullRequestData['author']['nickname'] }}" title="{{ $pullRequestData['author']['nickname'] }}"> | [{{ $pullRequestData['title'] }}]({{ $pullRequestData['links']['html']['href'] }}) | {{ (new \Carbon\Carbon($pullRequestData['updated_on']))->diffForHumans() }} |
-    @endforeach
+| Author        | Title         | Pipeline | Updated  |
+| ------------- | ------------- |:--------:| --------:|
+@foreach($user['pull_requests'] as $pullRequest)
+@php $pullRequestData = $pullRequest->getData(); @endphp
+| <img style="width: 30px; border-radius: 50%;" src="{{ $pullRequestData['author']['links']['avatar']['href'] }}" alt="{{ $pullRequestData['author']['nickname'] }}" title="{{ $pullRequestData['author']['nickname'] }}"> | [{{ $pullRequestData['title'] }}]({{ $pullRequestData['links']['html']['href'] }}) | <img src="{{ url($pullRequest->getLastPipelineState() . '.png') }}" alt="{{ $pullRequest->getLastPipelineState() }}" title="{{ $pullRequest->getLastPipelineState() }}"> | {{ (new \Carbon\Carbon($pullRequestData['updated_on']))->diffForHumans() }} |
+@endforeach
 @endcomponent
 
 * If you are owner of pull request, and you have done with all requested changes write 'Needs review' as comment.

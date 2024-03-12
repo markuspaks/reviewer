@@ -28,7 +28,7 @@ class NotificationController extends Controller
     public function sendEmails(Request $request, Bitbucket $bitbucket): Factory|View|Application
     {
         $uuidsFilter = array_keys($request->get('send'));
-        $users = $bitbucket->getAllUsers($uuidsFilter);
+        $users = $bitbucket->getUsers($uuidsFilter);
         $usersWithPullRequests = $bitbucket->getUsersWithAssignedPullRequests($users);
         $sendEmails = new SendEmails();
         $sendEmails->sendEmails($usersWithPullRequests);
