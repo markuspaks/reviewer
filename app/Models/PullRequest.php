@@ -97,7 +97,8 @@ class PullRequest
     {
         $users = [];
 
-        if ($this->isLastPipelineSuccessful()) {
+        $isLastPipelineSuccessful = $this->isLastPipelineSuccessful();
+        if ($isLastPipelineSuccessful === null || $isLastPipelineSuccessful) {
             foreach ($this->data['participants'] as $participant) {
                 if ($participant['user']['account_id'] === $this->data['author']['account_id']) {
                     continue;
