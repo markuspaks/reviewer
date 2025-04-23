@@ -3,8 +3,9 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class AssignedPullRequests extends Mailable
@@ -15,8 +16,6 @@ class AssignedPullRequests extends Mailable
 
     /**
      * Create a new message instance.
-     *
-     * @return void
      */
     public function __construct($user)
     {
@@ -24,16 +23,23 @@ class AssignedPullRequests extends Mailable
     }
 
     /**
-     * Build the message.
-     *
-     * @return $this
+     * Get the message envelope.
      */
-    public function build(): static
+    public function envelope(): Envelope
     {
-        return $this
-            ->subject(count($this->user['pull_requests']) . ' pull requests waiting for you')
-            ->markdown('mails.assigned-pull-requests', [
-            'user' => $this->user
-        ]);
+        return new Envelope(
+            subject: count($this->user['pull_requests']) . ' pull requests waiting for you',
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'mails.assigned-pull-requests',
+            with: ['user' => $this->user],
+        );
     }
 }
