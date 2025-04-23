@@ -20,7 +20,7 @@ set('allow_anonymous_stats', false);
 
 host('trulla.ee')
     ->set('remote_user', 'virt53937')
-    ->set('php_version', '81-cli')
+    ->set('php_version', '84-cli')
     ->set('deploy_path', '/data02/virt53937/domeenid/www.trulla.ee/reviewer');
 
 // Tasks
