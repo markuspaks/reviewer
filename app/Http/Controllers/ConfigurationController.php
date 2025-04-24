@@ -21,6 +21,10 @@ class ConfigurationController extends Controller
     {
         $users = $request->get('users');
         foreach ($users as $userData) {
+            if (!$userData['email']) {
+                continue;
+            }
+
             $uuid = str_replace(['{', '}'], '', $userData['uuid']);
             $user = User::find($uuid);
             if ($user === null) {
