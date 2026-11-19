@@ -25,11 +25,28 @@
         <summary>{{ $user->hasBitbucketToken() ? 'Replace the token' : 'How to create one' }}</summary>
         <ol class="account-steps">
             <li>
-                Open <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer">Atlassian API tokens</a>
-                and choose <strong>Create API token with scopes</strong>.
+                Open <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer">Atlassian API tokens</a>,
+                signed in as <strong>yourself</strong> (the account you use in Bitbucket, not a shared one).
             </li>
-            <li>Pick the <strong>Bitbucket</strong> app, and these scopes: @foreach($scopes as $scope)<code>{{ $scope }}</code>@if(!$loop->last), @endif @endforeach.</li>
-            <li>Copy the token and paste it here. It is checked with Bitbucket before it is saved.</li>
+            <li>Click <strong>Create API token with scopes</strong> (not the plain <em>Create API token</em>).</li>
+            <li>
+                Name it, e.g. <code>Reviewer</code>, and pick an expiry date (at most a year). When it expires, create a new
+                one and replace it here.
+            </li>
+            <li>Choose the <strong>Bitbucket</strong> app and click <strong>Next</strong>.</li>
+            <li>
+                Tick these scopes (the search box helps), then click <strong>Next</strong>:
+                <ul class="account-scopes">
+                    @foreach($scopes as $scope => $purpose)
+                        <li><code>{{ $scope }}</code> — {{ $purpose }}</li>
+                    @endforeach
+                </ul>
+            </li>
+            <li>Click <strong>Create token</strong> and copy it. Atlassian shows it only once.</li>
+            <li>
+                Paste it below with your Atlassian account email, and click <strong>Check and save</strong>. It is checked
+                with Bitbucket before it is saved.
+            </li>
         </ol>
 
         <form action="{{ url('configuration/bitbucket-token') }}" method="post">

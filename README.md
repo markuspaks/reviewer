@@ -1,61 +1,95 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Reviewer
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Pull request review tool for Bitbucket Cloud, with Jira assignees and an MCP server for AI agents.
 
-## About Laravel
+## Setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```bash
+composer install
+npm install && npm run build
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Set the database (`DB_*`) and mail (`MAIL_*`) settings in `.env`, then add the Bitbucket and Jira credentials below.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Bitbucket API token (app account)
 
-## Learning Laravel
+The sync (`php artisan reviewer:sync`) and MCP agents use one shared Atlassian account. It must be a member of every
+workspace whose pull requests you want to see.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. Sign in to Atlassian as that account and open
+   [API tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+2. Choose **Create API token with scopes**, give it a name and an expiry date.
+3. Pick the **Bitbucket** app and these scopes:
+   - `read:user:bitbucket`
+   - `read:workspace:bitbucket`
+   - `read:repository:bitbucket`
+   - `read:pullrequest:bitbucket`
+   - `read:pipeline:bitbucket`
+4. Copy the token (it's shown only once) into `.env`:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+   ```dotenv
+   BITBUCKET_EMAIL=bot@example.com      # the Atlassian account's email
+   BITBUCKET_API_TOKEN=ATATT...
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Jira API token
 
-## Laravel Sponsors
+Used to find each pull request's assignee from the Jira issue in its title or branch (e.g. `ABC-123`).
+Without it, assignees come from Bitbucket reviewers.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. Sign in as an Atlassian account that can browse the Jira projects and open
+   [API tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+2. Choose **Create API token** (the classic one, without scopes — the app calls the Jira site URL directly, which
+   scoped tokens don't support).
+3. Copy the token into `.env`:
 
-### Premium Partners
+   ```dotenv
+   JIRA_URL=https://your-site.atlassian.net
+   JIRA_EMAIL=bot@example.com
+   JIRA_API_TOKEN=ATATT...
+   ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+If a workspace uses another Jira site, set it under **Jira site per workspace** on the Configuration page. The same
+account must be able to open every site.
 
-## Contributing
+## First sync
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Users are linked to Bitbucket workspace members, so sync before creating any:
 
-## Code of Conduct
+```bash
+php artisan reviewer:sync --full
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Users
 
-## Security Vulnerabilities
+There's no sign-up page; create logins on the command line. The email is what they log in with; `--member` is their
+Bitbucket nickname or display name (as synced).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Ask for the password interactively (or pick the member from a list when --member is left out)
+php artisan reviewer:user jane@example.com --member=jane
 
-## License
+# Generate a password and print it
+php artisan reviewer:user jane@example.com --member=jane --generate
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Running it again for an existing email sets a new password.
+
+After logging in, each user adds **their own** Bitbucket API token on the Configuration page, so comments and approvals
+appear under their name. They create it the same way as above (**Create API token with scopes**, app **Bitbucket**)
+with the scopes `read:user:bitbucket`, `read:repository:bitbucket`, `read:pullrequest:bitbucket` and
+`write:pullrequest:bitbucket`. The token is checked against Bitbucket and stored encrypted with `APP_KEY`.
+
+For AI agents, each user creates a personal MCP token on the Configuration page, which also shows the commands to
+connect Claude Code, Codex and others.
+
+## Scheduler
+
+Add the Laravel scheduler to cron. It runs `reviewer:sync` every five minutes and `send-emails` at 08:00 on weekdays.
+
+```cron
+* * * * * cd /path/to/reviewer && php artisan schedule:run >> /dev/null 2>&1
+```

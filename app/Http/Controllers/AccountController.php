@@ -16,8 +16,13 @@ use Illuminate\Validation\ValidationException;
  */
 class AccountController extends Controller
 {
-    /** Scopes the review page needs, for the help text and error messages. */
-    public const TOKEN_SCOPES = ['read:user:bitbucket', 'read:repository:bitbucket', 'read:pullrequest:bitbucket', 'write:pullrequest:bitbucket'];
+    /** Scopes the review page needs, with what each is for: for the help text and error messages. */
+    public const TOKEN_SCOPES = [
+        'read:user:bitbucket' => 'checks the token is yours',
+        'read:repository:bitbucket' => 'reads the changed files',
+        'read:pullrequest:bitbucket' => 'reads pull requests, diffs and comments',
+        'write:pullrequest:bitbucket' => 'sends your comments and approvals',
+    ];
 
     /**
      * Save the token after checking with Bitbucket that it works and belongs to this user.
@@ -42,7 +47,7 @@ class AccountController extends Controller
             throw $this->tokenError("Bitbucket didn't accept this token with $email. Use your Atlassian account email, and an API token with Bitbucket scopes.");
         }
         if ($response->status() === 403) {
-            throw $this->tokenError('The token works but is missing scopes. Create it with: ' . implode(', ', self::TOKEN_SCOPES) . '.');
+            throw $this->tokenError('The token works but is missing scopes. Create it with: ' . implode(', ', array_keys(self::TOKEN_SCOPES)) . '.');
         }
         if (!$response->successful()) {
             throw $this->tokenError('Bitbucket: ' . ($response->json('error.message') ?? 'HTTP ' . $response->status()));

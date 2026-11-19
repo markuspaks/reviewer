@@ -1,7 +1,12 @@
 @import "bulma/css/bulma.min.css";
 
+/* Fixed size: Bulma's img { max-width: 100% } would let a squeezed table column shrink avatars to a few pixels. */
 .avatar {
     width: 30px;
+    height: 30px;
+    max-width: none;
+    flex-shrink: 0;
+    object-fit: cover;
     border-radius: 50%;
 }
 
@@ -157,6 +162,7 @@ table.reviews td {
 
 .avatar-small {
     width: 20px;
+    height: 20px;
     vertical-align: middle;
 }
 
@@ -1187,6 +1193,15 @@ body.is-resizing-review {
 
 .account-steps {
     margin: 8px 0 12px 20px;
+}
+
+.account-steps > li {
+    margin-bottom: 4px;
+}
+
+.account-scopes {
+    list-style: disc;
+    margin: 4px 0 4px 20px;
 }
 
 .account-token-status {
