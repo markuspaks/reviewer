@@ -2,44 +2,25 @@
 
 namespace App\Services;
 
+use App\Models\BitbucketUser;
 use App\Models\PullRequest;
+use App\Models\PullRequestSnapshot;
 use App\Models\User;
-use Bitbucket\HttpClient\Util\UriBuilder;
-use GrahamCampbell\Bitbucket\BitbucketManager;
-use Http\Client\Exception;
 
+/**
+ * Bitbucket data for the pages, read from the local copy that the sync keeps fresh (see Sync).
+ * Nothing here calls the Bitbucket API.
+ */
 class Bitbucket
 {
-    protected BitbucketManager $bitbucket;
-
-    protected ?array $currentUser = null;
-
     protected ?array $pullRequests = null;
 
     protected ?array $users = null;
 
-    protected ?array $workspaces = null;
-
-    public function __construct(BitbucketManager $bitbucketManager)
-    {
-        $this->bitbucket = $bitbucketManager;
-    }
-
     /**
-     * @throws Exception
-     */
-    public function getCurrentUser(): array
-    {
-        if ($this->currentUser !== null) {
-            return $this->currentUser;
-        }
-
-        return $this->currentUser = $this->bitbucket->currentUser()->show();
-    }
-
-    /**
+     * Open pull requests, most recently updated first.
+     *
      * @return PullRequest[]
-     * @throws Exception
      */
     public function getAllPullRequests(): array
     {
@@ -47,43 +28,52 @@ class Bitbucket
             return $this->pullRequests;
         }
 
-        $pullRequests = [];
-        foreach ($this->bitbucket->currentUser()->listRepositoryPermissions(['pagelen' => 100])['values'] as $repositories) {
-            [$workspace, $repository] = explode('/', $repositories['repository']['full_name']);
-            foreach ($this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->list(['pagelen' => 50])['values'] as $pullRequestWithoutReviewers) {
-                $pullRequest = $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->show($pullRequestWithoutReviewers['id']);
-                $pullRequests[] = new PullRequest($this, $pullRequest);
-            }
-        }
-
-        usort($pullRequests, function ($a, $b) {
-            if ($a->getData()['updated_on'] < $b->getData()['updated_on']) {
-                return 1;
-            }
-            return -1;
-        });
-
-        return $this->pullRequests = $pullRequests;
+        return $this->pullRequests = PullRequestSnapshot::query()
+            ->orderByDesc('pull_request_updated_on')
+            ->get()
+            ->map(fn(PullRequestSnapshot $snapshot) => new PullRequest(
+                $this,
+                $snapshot->data,
+                $snapshot->comments ?? [],
+                $snapshot->last_pipeline,
+                $snapshot->diffstat,
+            ))
+            ->all();
     }
 
+    /**
+     * Workspace members keyed by uuid, with the email saved on the Configuration page.
+     */
     public function getAllUsers(): array
     {
         if ($this->users !== null) {
             return $this->users;
         }
 
-        $users = [];
-        foreach ($this->getAllWorkspaces() as $workspace) {
+        $emails = User::pluck('email', 'uuid');
 
-            /** @noinspection PhpUnhandledExceptionInspection */
-            foreach ($this->bitbucket->workspaces($workspace['slug'])->members()->list()['values'] as $userData) {
-                $uuid = $userData['user']['uuid'];
-                $userData['user']['email'] = User::find(str_replace(['{', '}'], '', $uuid))->email ?? null;
-                $users[$uuid] = $userData['user'];
-            }
+        $users = [];
+        foreach (BitbucketUser::orderBy('nickname')->get() as $bitbucketUser) {
+            $user = $bitbucketUser->data;
+            $user['email'] = $emails[str_replace(['{', '}'], '', $bitbucketUser->uuid)] ?? null;
+            $users[$bitbucketUser->uuid] = $user;
         }
 
         return $this->users = $users;
+    }
+
+    /**
+     * Workspace member with the given Atlassian account ID (shared by Bitbucket and Jira).
+     */
+    public function findUserByAccountId(string $accountId): ?array
+    {
+        foreach ($this->getAllUsers() as $user) {
+            if (($user['account_id'] ?? null) === $accountId) {
+                return $user;
+            }
+        }
+
+        return null;
     }
 
     public function getUsers(?array $uuidsFilter = null): array
@@ -92,14 +82,14 @@ class Bitbucket
     }
 
     /**
-     * @throws Exception
+     * @param PullRequest[]|null $pullRequests only these pull requests (default all)
      */
-    public function getUsersWithAssignedPullRequests(array $users): array
+    public function getUsersWithAssignedPullRequests(array $users, ?array $pullRequests = null): array
     {
         foreach ($users as $key => $user) {
             $users[$key]['pull_requests'] = [];
         }
-        foreach ($this->getAllPullRequests() as $pullRequest) {
+        foreach ($pullRequests ?? $this->getAllPullRequests() as $pullRequest) {
             foreach ($pullRequest->getAssignees() as $assignee) {
                 if (!isset($users[$assignee['uuid']])) {
                     continue;
@@ -109,42 +99,5 @@ class Bitbucket
         }
 
         return $users;
-    }
-
-    public function getAllWorkspaces(): array
-    {
-        if ($this->workspaces !== null) {
-            return $this->workspaces;
-        }
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        return $this->workspaces = $this->bitbucket->currentUser()->listWorkspaces()['values'];
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function getComments(PullRequest $pullRequest): array
-    {
-        $pullRequestData = $pullRequest->getData();
-        [$workspace, $repository] = explode('/', $pullRequestData['source']['repository']['full_name']);
-        $response = $this->bitbucket->repositories()->workspaces($workspace)->pullRequests($repository)->comments($pullRequestData['id'])->list([
-            'sort' => '-updated_on',
-            'pagelen' => 100,
-        ]);
-        return $response['values'];
-    }
-
-    public function getLastPipeline(PullRequest $pullRequest): ?array
-    {
-        $pullRequestData = $pullRequest->getData();
-        [$workspace, $repository] = explode('/', $pullRequestData['source']['repository']['full_name']);
-        $list = $this->bitbucket->repositories()->workspaces($workspace)->pipelines($repository)->list([
-            'target.branch' => $pullRequest->getData()['source']['branch']['name'],
-            'sort' => '-created_on',
-            'pagelen' => 1,
-        ]);
-
-        return $list['values'][0] ?? null;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\SendEmails;
+use App\Console\Commands\SyncData;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule) {
+        $schedule
+            ->command(SyncData::class)
+            ->everyFiveMinutes()
+            ->withoutOverlapping(30);
+
         $schedule
             ->command(SendEmails::class)
             ->dailyAt('08:00')

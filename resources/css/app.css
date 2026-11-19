@@ -30,3 +30,1186 @@ table.reviews td {
 .pipeline-state {
     padding-top: 8px;
 }
+
+.nowrap {
+    white-space: nowrap;
+}
+
+table.reviews td {
+    vertical-align: middle;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+/* Copy button next to a ticket key: copies an AI review prompt. */
+.copy-prompt {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-left: 4px;
+    padding: 3px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: #7a7a7a;
+    cursor: pointer;
+    position: relative;
+}
+
+.copy-prompt:hover,
+.copy-prompt:focus-visible {
+    color: #485fc7;
+    background-color: rgba(72, 95, 199, 0.1);
+}
+
+.copy-prompt.is-copied {
+    color: #48c78e;
+}
+
+.copy-prompt.is-copy-failed {
+    color: #f14668;
+}
+
+.copy-prompt.is-copied::after,
+.copy-prompt.is-copy-failed::after {
+    content: "Copied";
+    position: absolute;
+    left: 100%;
+    margin-left: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.copy-prompt.is-copy-failed::after {
+    content: "Copy failed";
+}
+
+/* Pull request count: click the number to open the list of pull requests. */
+.pr-pane {
+    position: relative;
+}
+
+.pr-pane > summary {
+    list-style: none;
+    min-width: 2.5em;
+}
+
+.pr-pane > summary::-webkit-details-marker {
+    display: none;
+}
+
+.pr-pane[open] > summary {
+    background-color: #485fc7;
+    border-color: #485fc7;
+    color: #fff;
+}
+
+.pr-pane-content {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 20;
+    width: min(560px, calc(100vw - 32px));
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 8px 12px;
+}
+
+.pr-pane-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+}
+
+.pr-pane-item + .pr-pane-item {
+    border-top: 1px solid #eee;
+}
+
+.pr-pane-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.pr-pane-meta {
+    font-size: 0.8em;
+    color: #777;
+}
+
+.pipeline-icon {
+    flex-shrink: 0;
+    width: 18px;
+}
+
+.pipeline-icon img,
+.pipeline-icon svg {
+    display: block;
+}
+
+.sync-status {
+    gap: 10px;
+    font-size: 0.85em;
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Pull request review page
+   --------------------------------------------------------------------------------------------- */
+
+.avatar-small {
+    width: 20px;
+    vertical-align: middle;
+}
+
+/* The heading stays on top while reviewing; --review-header-height (set by review.js) keeps everything else below it. */
+.review {
+    --review-header-height: 0px;
+}
+
+.review-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 0 -12px 16px;
+    padding: 8px 12px;
+    background: var(--bulma-scheme-main, #fff);
+    border-bottom: 1px solid transparent;
+}
+
+.review-header .title {
+    margin-bottom: 6px;
+}
+
+/* Once scrolled, a compact heading: the participants go, the title gets smaller. */
+.review-header.is-stuck {
+    border-bottom-color: rgba(128, 128, 128, 0.3);
+    box-shadow: 0 4px 8px -6px rgba(0, 0, 0, 0.3);
+}
+
+.review-header.is-stuck .title {
+    font-size: 1.15rem;
+    margin-bottom: 2px;
+}
+
+.review-header.is-stuck .review-participants {
+    display: none;
+}
+
+/* Approve / Request changes, top right of the heading (also when compact). */
+.review-actions.buttons {
+    float: right;
+    margin: 2px 0 4px 12px;
+}
+
+.review-actions.buttons:empty {
+    display: none;
+}
+
+/* Viewed count and Previous / Next unviewed file, left of Approve; the side column toggles left of those. */
+.review-file-nav.buttons,
+.review-pane-toggles.buttons {
+    float: right;
+    margin: 2px 0 4px 12px;
+    flex-wrap: nowrap;
+}
+
+.review-file-nav .button,
+.review-pane-toggles .button {
+    margin-bottom: 0;
+}
+
+.review-pane-toggles .button.is-selected {
+    background: rgba(72, 95, 199, 0.15);
+    border-color: rgba(72, 95, 199, 0.4);
+}
+
+.review-pane-toggles .tag {
+    margin-left: 6px;
+    height: 1.6em;
+    padding: 0 0.5em;
+}
+
+.review-repo,
+.review-meta {
+    font-size: 0.9em;
+    color: var(--bulma-text-weak, #6b7280);
+}
+
+.review-meta code {
+    font-size: 0.95em;
+}
+
+.review-participants {
+    margin-top: 6px;
+}
+
+.pipeline-label {
+    font-weight: 600;
+}
+
+.pipeline-successful, .pipeline-paused { color: #2f9e44; }
+.pipeline-failed, .pipeline-error { color: #e03131; }
+
+/* Side column widths: dragged with the handles in the gaps (review.js), remembered per browser. */
+.review-layout {
+    --review-left: 280px;
+    --review-right: 300px;
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--review-left) minmax(0, 1fr) var(--review-right);
+    gap: 16px;
+    align-items: start;
+}
+
+.review-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    z-index: 3;
+    cursor: col-resize;
+    touch-action: none;
+}
+
+.review-resizer-left {
+    left: var(--review-left);
+}
+
+.review-resizer-right {
+    right: var(--review-right);
+}
+
+/* A thin line in the middle of the gap while hovered, dragged or focused. */
+.review-resizer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 7px;
+    width: 2px;
+    border-radius: 1px;
+    background: transparent;
+    transition: background 0.15s;
+}
+
+.review-resizer:hover::after,
+.review-resizer:focus-visible::after,
+.review-resizer.is-dragging::after {
+    background: var(--bulma-link, #485fc7);
+}
+
+.review-resizer:focus-visible {
+    outline: none;
+}
+
+body.is-resizing-review {
+    cursor: col-resize;
+    user-select: none;
+}
+
+/* Narrower: the unsent comments go above the file list and the diff, full width. */
+@media (max-width: 1150px) {
+    .review-layout {
+        grid-template-columns: var(--review-left) minmax(0, 1fr);
+    }
+
+    .review-resizer-right {
+        display: none;
+    }
+
+    .review-drafts {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+}
+
+@media (max-width: 900px) {
+    .review-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .review-resizer {
+        display: none;
+    }
+}
+
+/* Side columns hidden with the toggles in the heading: the diff takes their room. Declared after the narrower
+   layouts above so it wins at every width. */
+.review-layout.hide-left .review-sidebar,
+.review-layout.hide-right .review-drafts,
+.review-layout.hide-left .review-resizer-left,
+.review-layout.hide-right .review-resizer-right {
+    display: none !important;
+}
+
+.review-layout.hide-left {
+    grid-template-columns: minmax(0, 1fr) var(--review-right);
+}
+
+.review-layout.hide-right {
+    grid-template-columns: var(--review-left) minmax(0, 1fr);
+}
+
+.review-layout.hide-left.hide-right {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 1150px) {
+    /* The unsent comments are above the diff here, so hiding the file list leaves one column. */
+    .review-layout.hide-left {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .review-layout:is(.hide-left, .hide-right) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.review-sidebar,
+.review-drafts {
+    position: sticky;
+    top: calc(var(--review-header-height) + 12px);
+    max-height: calc(100vh - var(--review-header-height) - 24px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (max-width: 1150px) {
+    /* Above the left column's resize handle, which runs the full height. */
+    .review-drafts {
+        position: relative;
+        top: auto;
+        z-index: 4;
+        max-height: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .review-sidebar {
+        position: static;
+        max-height: none;
+    }
+}
+
+.review-sidebar .box,
+.review-drafts .box {
+    margin-bottom: 0;
+    padding: 12px;
+}
+
+.drafts-title,
+.files-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.files-actions {
+    margin-left: auto;
+}
+
+.drafts-nav {
+    margin-bottom: 4px !important;
+}
+
+.drafts-list {
+    margin: 0 0 10px 1.4em;
+    font-size: 0.85em;
+}
+
+.drafts-list a {
+    display: block;
+    padding: 3px 0;
+}
+
+.draft-where {
+    display: block;
+    font-weight: 600;
+}
+
+.draft-text {
+    display: block;
+    color: var(--bulma-text-weak, #6b7280);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.drafts-empty {
+    font-size: 0.85em;
+    margin-bottom: 10px;
+}
+
+.file-tree {
+    font-size: 0.85em;
+    list-style: none;
+    margin: 0;
+}
+
+.file-tree .file-tree {
+    margin-left: 12px;
+    font-size: inherit;
+}
+
+.tree-folder summary {
+    cursor: pointer;
+    padding: 2px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--bulma-text-weak, #6b7280);
+}
+
+.tree-file a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    color: inherit;
+}
+
+.tree-file a:hover,
+.tree-file a.is-current {
+    background: rgba(72, 95, 199, 0.12);
+}
+
+.tree-file-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tree-comments {
+    font-size: 0.8em;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: rgba(72, 95, 199, 0.2);
+}
+
+.file-status {
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.status-added { color: #2f9e44; }
+.status-deleted { color: #e03131; }
+.status-renamed { color: #7048e8; }
+.status-modified { color: #e8590c; }
+
+.review-description,
+.general-comments {
+    margin-bottom: 16px !important;
+}
+
+/* Diff */
+
+.diff-file {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    /* clip, not hidden: hidden would stop the file header from sticking. */
+    overflow: clip;
+    scroll-margin-top: calc(var(--review-header-height) + 12px);
+}
+
+.diff-file-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(128, 128, 128, 0.1);
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+    position: sticky;
+    top: var(--review-header-height);
+    z-index: 2;
+    backdrop-filter: blur(6px);
+}
+
+.diff-file-path {
+    font-family: monospace;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+    flex: 1;
+}
+
+.diff-file-stats {
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.diff-file-toggle {
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+    width: 18px;
+    padding: 0;
+}
+
+.diff-file-toggle::before {
+    content: '▾';
+}
+
+.diff-file.is-collapsed .diff-file-toggle::before {
+    content: '▸';
+}
+
+.diff-file.is-collapsed .diff-file-body {
+    display: none;
+}
+
+.diff-file:not(.is-collapsed) .diff-collapsed-note {
+    display: none;
+}
+
+.diff-collapsed-note,
+.diff-note {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    color: var(--bulma-text-weak, #6b7280);
+}
+
+.file-comments:has(.thread, .comment-form) {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+    background: rgba(128, 128, 128, 0.06);
+}
+
+.thread-label {
+    padding: 6px 12px 0;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--bulma-text-weak, #6b7280);
+}
+
+.diff-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.diff-table .col-ln {
+    width: 48px;
+}
+
+.diff-table td {
+    padding: 0 8px;
+    border: 0;
+    vertical-align: top;
+}
+
+.diff-table td.ln {
+    text-align: right;
+    color: var(--bulma-text-weak, #868e96);
+    user-select: none;
+    border-right: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.diff-table td.code {
+    position: relative;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding-left: 28px;
+}
+
+.diff-table .sign {
+    user-select: none;
+    display: inline-block;
+    width: 1.2em;
+    margin-left: -1.2em;
+    color: var(--bulma-text-weak, #868e96);
+}
+
+.line-add td { background: rgba(46, 160, 67, 0.15); }
+.line-add td.ln { background: rgba(46, 160, 67, 0.25); }
+.line-del td { background: rgba(248, 81, 73, 0.15); }
+.line-del td.ln { background: rgba(248, 81, 73, 0.25); }
+.line-meta td { color: var(--bulma-text-weak, #868e96); font-style: italic; }
+
+.hunk-header td {
+    background: rgba(72, 95, 199, 0.1);
+    color: var(--bulma-text-weak, #6b7280);
+    padding: 4px 12px;
+}
+
+/* Syntax highlighting (highlight.js token classes), in GitHub-like colours that follow the light / dark theme. */
+.diff-table,
+.change-tooltip {
+    --hl-keyword: #cf222e;
+    --hl-string: #0a3069;
+    --hl-comment: #6e7781;
+    --hl-number: #0550ae;
+    --hl-title: #8250df;
+    --hl-variable: #953800;
+    --hl-tag: #116329;
+}
+
+@media (prefers-color-scheme: dark) {
+    .diff-table,
+    .change-tooltip {
+        --hl-keyword: #ff7b72;
+        --hl-string: #a5d6ff;
+        --hl-comment: #8b949e;
+        --hl-number: #79c0ff;
+        --hl-title: #d2a8ff;
+        --hl-variable: #ffa657;
+        --hl-tag: #7ee787;
+    }
+}
+
+.code-text :is(.hljs-keyword, .hljs-doctag, .hljs-meta .hljs-keyword, .hljs-template-tag, .hljs-type) { color: var(--hl-keyword); }
+.code-text :is(.hljs-string, .hljs-regexp, .hljs-meta .hljs-string) { color: var(--hl-string); }
+.code-text :is(.hljs-comment, .hljs-code, .hljs-formula) { color: var(--hl-comment); font-style: italic; }
+.code-text :is(.hljs-number, .hljs-literal, .hljs-attr, .hljs-attribute, .hljs-symbol, .hljs-meta, .hljs-selector-attr, .hljs-selector-class, .hljs-selector-id, .hljs-property, .hljs-operator) { color: var(--hl-number); }
+.code-text :is(.hljs-title, .hljs-title.class_, .hljs-title.function_, .hljs-section) { color: var(--hl-title); }
+.code-text :is(.hljs-variable, .hljs-template-variable, .hljs-built_in) { color: var(--hl-variable); }
+.code-text :is(.hljs-name, .hljs-selector-tag, .hljs-selector-pseudo, .hljs-quote, .hljs-bullet) { color: var(--hl-tag); }
+.code-text .hljs-section { font-weight: 600; }
+.code-text .hljs-emphasis { font-style: italic; }
+.code-text .hljs-strong { font-weight: 600; }
+
+/* Full file and new version: the unchanged lines between the hunks show only with them, and the hunk headers then go. */
+.diff-file:not(.is-full-file, .is-new-file) .diff-expanded,
+.diff-file:is(.is-full-file, .is-new-file) .hunk-header {
+    display: none;
+}
+
+.js-file-view.is-active-view {
+    font-weight: 600;
+    background: rgba(72, 95, 199, 0.15);
+}
+
+/* New version: no deleted lines (nor their comments) and no old line numbers; added lines look like any other,
+   marked only by a bar next to the line number: green added, orange changed, a red notch where lines were deleted. */
+.diff-file.is-new-file :is(tr.line-del, tr.line-del + tr.comments-row, tr.line-meta) {
+    display: none;
+}
+
+.diff-file.is-new-file .diff-table col.col-ln:first-child {
+    width: 0;
+}
+
+.diff-file.is-new-file .diff-table td.ln:first-child {
+    padding: 0;
+    border: 0;
+    font-size: 0;
+    overflow: hidden;
+}
+
+.diff-file.is-new-file .line-add td,
+.diff-file.is-new-file .line-add td.ln {
+    background: none;
+}
+
+.diff-file.is-new-file .line-add .sign {
+    visibility: hidden;
+}
+
+.diff-file.is-new-file .diff-table td.ln:nth-child(2) {
+    position: relative;
+}
+
+.diff-file.is-new-file .mark-added td.ln:nth-child(2) {
+    box-shadow: inset -3px 0 0 rgba(46, 160, 67, 0.7);
+}
+
+.diff-file.is-new-file .mark-changed td.ln:nth-child(2) {
+    box-shadow: inset -3px 0 0 rgba(219, 136, 20, 0.75);
+}
+
+/* Hovering a marked line number shows the old version (review.js). */
+.diff-file.is-new-file :is(.mark-added, .mark-changed, .mark-deleted-before, .mark-deleted-after) td.ln:nth-child(2) {
+    cursor: help;
+}
+
+.change-tooltip {
+    position: fixed;
+    z-index: 50;
+    max-width: min(720px, calc(100vw - 16px));
+    max-height: 60vh;
+    overflow: hidden;
+    padding: 4px 0;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 6px;
+    background: var(--bulma-scheme-main, #fff);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    pointer-events: none;
+}
+
+.change-tooltip[hidden] {
+    display: none;
+}
+
+.change-tooltip-title,
+.change-tooltip-more {
+    padding: 0 10px 2px;
+    font-family: var(--bulma-family-primary, system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--bulma-text-weak, #6b7280);
+}
+
+.change-tooltip.is-added .change-tooltip-title {
+    padding-bottom: 0;
+}
+
+.change-tooltip-line {
+    display: flex;
+    background: rgba(248, 81, 73, 0.15);
+}
+
+.change-tooltip-line .ln {
+    flex: none;
+    width: 44px;
+    padding-right: 8px;
+    text-align: right;
+    color: var(--bulma-text-weak, #868e96);
+    background: rgba(248, 81, 73, 0.25);
+    user-select: none;
+}
+
+.change-tooltip-line .code-text {
+    padding: 0 10px;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.diff-file.is-new-file :is(.mark-deleted-before, .mark-deleted-after) td.ln:nth-child(2)::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    border: 4px solid transparent;
+    border-right-color: rgba(218, 54, 51, 0.8);
+}
+
+.diff-file.is-new-file .mark-deleted-before td.ln:nth-child(2)::after {
+    top: -4px;
+}
+
+.diff-file.is-new-file .mark-deleted-after td.ln:nth-child(2)::after {
+    bottom: -4px;
+}
+
+.diff-full-error {
+    padding: 8px 12px;
+    margin: 0;
+}
+
+.add-comment {
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 18px;
+    height: 18px;
+    line-height: 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: #485fc7;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.line:hover .add-comment,
+.add-comment:focus {
+    opacity: 1;
+}
+
+.comments-row td {
+    padding: 8px 12px 8px 108px !important;
+    background: rgba(128, 128, 128, 0.06);
+    font-family: var(--bulma-family-primary, system-ui, sans-serif);
+    font-size: 14px;
+    white-space: normal;
+}
+
+@media (max-width: 700px) {
+    .comments-row td {
+        padding-left: 12px !important;
+    }
+}
+
+/* Comments */
+
+.threads {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.threads:empty {
+    display: none;
+}
+
+.thread {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    background: var(--bulma-scheme-main, #fff);
+    max-width: 900px;
+}
+
+.replies .comment {
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    padding-left: 32px;
+}
+
+.comment {
+    padding: 8px 12px;
+    scroll-margin: calc(var(--review-header-height) + 80px);
+}
+
+/* Unsent: saved here, only the author sees it. */
+.comment.is-unsent {
+    background: rgba(250, 176, 5, 0.14);
+    box-shadow: inset 3px 0 0 #f08c00;
+}
+
+.thread.is-unsent {
+    border: 1px dashed #f08c00;
+}
+
+/* Pending in a review the user started in Bitbucket. */
+.comment.is-bitbucket-draft {
+    background: rgba(51, 154, 240, 0.08);
+}
+
+/* "Hide comments already in Bitbucket": only threads with an unsent comment stay, with the comment replied to. */
+.review.hide-sent .thread:not(:has(.comment.is-unsent, .comment-form)),
+.review.hide-sent .replies .comment:not(.is-unsent),
+.review.hide-sent .comments-row:not(:has(.comment.is-unsent, .comment-form)) {
+    display: none;
+}
+
+.drafts-filter {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85em;
+}
+
+.drafts-bitbucket {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.drafts-bitbucket .help {
+    margin-bottom: 8px;
+}
+
+.comment.is-flashing {
+    animation: comment-flash 1.5s ease-out;
+}
+
+@keyframes comment-flash {
+    from { outline: 2px solid #fab005; outline-offset: -2px; }
+    to { outline: 2px solid transparent; outline-offset: -2px; }
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+}
+
+.comment-header time {
+    color: var(--bulma-text-weak, #868e96);
+}
+
+.comment-actions {
+    margin-left: auto;
+}
+
+.comment-body {
+    font-size: 0.95em;
+}
+
+.comment-body > :last-child {
+    margin-bottom: 0 !important;
+}
+
+.comment-deleted {
+    font-style: italic;
+    color: var(--bulma-text-weak, #868e96);
+}
+
+.thread-footer {
+    padding: 6px 12px 8px;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.thread-footer > .comment-form {
+    flex-basis: 100%;
+}
+
+/* Resolve / Reopen, and who resolved it, on the right of the footer. */
+.thread-resolution {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.thread-resolved-by {
+    font-size: 0.85em;
+}
+
+.thread-resolved-by time {
+    color: var(--bulma-text-weak, #868e96);
+}
+
+/* Resolved threads are folded to the first line of their first comment until shown. */
+.js-expand-thread {
+    display: none;
+}
+
+.thread.is-resolved .js-expand-thread {
+    display: inline-flex;
+}
+
+.thread.is-resolved:not(.is-expanded) > .comment .comment-body {
+    max-height: 1.6em;
+    overflow: hidden;
+    opacity: 0.6;
+}
+
+.thread.is-resolved:not(.is-expanded) > .replies,
+.thread.is-resolved:not(.is-expanded) .js-reply {
+    display: none;
+}
+
+.comment-form {
+    margin: 6px 0;
+    max-width: 900px;
+}
+
+.comment-form .textarea {
+    font-family: inherit;
+    margin-bottom: 6px;
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Files for agents
+   --------------------------------------------------------------------------------------------- */
+
+.agent-file-content {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+}
+
+.agent-files-repository {
+    font-weight: 600;
+    margin: 14px 0 4px;
+}
+
+.agent-files-repository:first-of-type {
+    margin-top: 0;
+}
+
+.agent-file {
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    padding: 8px 0;
+    scroll-margin-top: 12px;
+}
+
+.agent-file > summary {
+    cursor: pointer;
+}
+
+.agent-file-edit {
+    margin-top: 10px;
+}
+
+.agent-file-buttons {
+    margin-top: 8px;
+}
+
+.mcp-setup pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    padding: 8px 10px;
+}
+
+.mcp-token {
+    user-select: all;
+}
+
+.mcp-commands {
+    margin-top: 12px;
+}
+
+.mcp-commands > summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mcp-command-label {
+    margin: 10px 0 4px;
+    font-size: 0.9em;
+}
+
+.agent-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #7048e8;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.review-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.review-filters .select select {
+    max-width: calc(100vw - 32px);
+}
+
+.counter.is-selected .avatar {
+    outline: 2px solid #485fc7;
+    outline-offset: 2px;
+}
+
+.jira-sites .field-label {
+    flex-grow: 0;
+    min-width: 120px;
+    text-align: left;
+}
+
+/* Viewed files: checkbox in the file header; viewed files are closed and dimmed in the tree. */
+.viewed-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+.diff-file.is-viewed .viewed-toggle {
+    background: rgba(72, 95, 199, 0.15);
+    border-color: #485fc7;
+}
+
+.diff-file.is-viewed .diff-file-path {
+    opacity: 0.6;
+}
+
+.tree-viewed {
+    display: none;
+    color: #2f9e44;
+    font-size: 0.85em;
+}
+
+.tree-file a.is-viewed .tree-viewed {
+    display: inline;
+}
+
+.tree-file a.is-viewed .tree-file-name {
+    opacity: 0.55;
+}
+
+.files-title {
+    flex-wrap: wrap;
+}
+
+.files-title strong {
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Login and account settings
+   --------------------------------------------------------------------------------------------- */
+
+.login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 360px;
+}
+
+.login-help {
+    margin-top: 12px;
+}
+
+.logout-form {
+    display: inline;
+    margin: 0;
+}
+
+.account-settings details {
+    margin-top: 10px;
+}
+
+.account-steps {
+    margin: 8px 0 12px 20px;
+}
+
+.account-token-status {
+    margin: 8px 0;
+}
+
+.account-remove {
+    margin-top: 10px;
+}
+
+/* Reviews list: diff size of a ticket or pull request. */
+.diff-size {
+    font-variant-numeric: tabular-nums;
+}
+
+.diff-size-files {
+    color: var(--bulma-text-weak, #6b7280);
+}
+
+.diff-size-added {
+    color: #2f9e44;
+}
+
+.diff-size-removed {
+    color: #e03131;
+}

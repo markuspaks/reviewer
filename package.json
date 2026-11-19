@@ -12,6 +12,7 @@
         "vite": "^6.2.4"
     },
     "dependencies": {
-        "bulma": "^1.0.4"
+        "bulma": "^1.0.4",
+        "highlight.js": "^11.12.0"
     }
 }

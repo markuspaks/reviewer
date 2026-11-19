@@ -35,10 +35,12 @@ return [
         ],
     ],
 
-    'bitbucket' => [
-        'client_id' => env('BITBUCKET_CLIENT_ID'),
-        'client_secret' => env('BITBUCKET_CLIENT_SECRET'),
-        'redirect' => config('app.url') . '/auth/callback',
+    'jira' => [
+        // e.g. https://your-site.atlassian.net
+        'url' => env('JIRA_URL'),
+        'email' => env('JIRA_EMAIL'),
+        // https://id.atlassian.com/manage-profile/security/api-tokens
+        'api_token' => env('JIRA_API_TOKEN'),
     ],
 
 ];

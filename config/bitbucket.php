@@ -24,7 +24,8 @@ return [
     |
     */
 
-    'default' => 'main',
+    // The app's own account (BITBUCKET_EMAIL / BITBUCKET_API_TOKEN). Users' calls go through BitbucketUserApi instead.
+    'default' => 'alternative',
 
     /*
     |--------------------------------------------------------------------------
@@ -40,18 +41,12 @@ return [
 
     'connections' => [
 
-        'main' => [
-            'method'  => 'oauth',
-            'token'   => 'your-token',
-            // 'backoff' => false,
-            // 'cache'   => false,
-            // 'url'     => null,
-        ],
-
+        // Used by cron (reviewer:sync) and MCP agents: Atlassian account email + API token, sent as HTTP basic auth.
+        // BITBUCKET_USERNAME / BITBUCKET_PASSWORD are the old names, still read as a fallback.
         'alternative' => [
             'method'   => 'password',
-            'username' => env('BITBUCKET_USERNAME'),
-            'password' => env('BITBUCKET_PASSWORD'),
+            'username' => env('BITBUCKET_EMAIL', env('BITBUCKET_USERNAME')),
+            'password' => env('BITBUCKET_API_TOKEN', env('BITBUCKET_PASSWORD')),
             // 'backoff'  => false,
             // 'cache'    => false,
             // 'url'      => null,

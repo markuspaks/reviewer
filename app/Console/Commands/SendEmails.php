@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Services\Bitbucket;
-use Http\Client\Exception;
 use Illuminate\Console\Command;
 
 class SendEmails extends Command
@@ -27,12 +26,10 @@ class SendEmails extends Command
      *
      * @param Bitbucket $bitbucket
      * @return int
-     * @throws Exception
      */
     public function handle(Bitbucket $bitbucket): int
     {
-        config()->set('bitbucket.default', 'alternative');
-
+        // Reads the local copy made by reviewer:sync, so no Bitbucket credentials are needed here.
         $users = $bitbucket->getAllUsers();
         $usersWithPullRequests = $bitbucket->getUsersWithAssignedPullRequests($users);
 
