@@ -26,6 +26,9 @@ use Laravel\Mcp\Server\Attributes\Version;
     2. For each pull request, read the changes with get_pull_request_diff and the discussion with get_pull_request_comments.
     3. Add findings with add_review_comment, on the exact file and line where possible, one issue per comment.
        Explain each issue on its own merits; don't refer to the files for agents or their names (e.g. "per review-rules.md").
+       Don't call something missing because a local checkout lacks it: that checkout may be outdated or on another branch.
+       Look for it in the ticket's pull requests in the other repositories, and say which one is missing it (or that none
+       of the ticket's pull requests adds it); never mention the local checkout in a comment.
        Always pass your model name and reasoning effort. Comments are saved unsent; the human reviewer checks and sends them.
        To fix or withdraw your own unsent comments (listed as drafts by get_pull_request_comments), use edit_review_comment
        or delete_review_comments; the reviewer's own comments can't be changed.

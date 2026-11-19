@@ -15,7 +15,8 @@ use Laravel\Mcp\Server\Tool;
     as its author; the human reviewer checks it and decides whether to send it to Bitbucket. Nothing is posted to Bitbucket.
     Comment on a line (path + line + side), on a whole file (path only), on the pull request (no path), or reply to a
     Bitbucket comment (parent_id). Write one comment per issue, in Markdown. Don't mention the files for agents or their
-    names; the pull request's author doesn't see them, so explain the issue itself.
+    names; the pull request's author doesn't see them, so explain the issue itself. For missing functionality, name the
+    ticket's pull request (in another repository) that lacks it, not your local checkout.
     TEXT)]
 class AddReviewComment extends Tool
 {
