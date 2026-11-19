@@ -14,7 +14,8 @@ use Laravel\Mcp\Server\Tool;
     Add a review comment to a pull request. It is saved in Reviewer as an unsent comment, with your model name and effort
     as its author; the human reviewer checks it and decides whether to send it to Bitbucket. Nothing is posted to Bitbucket.
     Comment on a line (path + line + side), on a whole file (path only), on the pull request (no path), or reply to a
-    Bitbucket comment (parent_id). Write one comment per issue, in Markdown.
+    Bitbucket comment (parent_id). Write one comment per issue, in Markdown. Don't mention the files for agents or their
+    names; the pull request's author doesn't see them, so explain the issue itself.
     TEXT)]
 class AddReviewComment extends Tool
 {

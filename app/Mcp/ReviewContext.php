@@ -76,7 +76,7 @@ class ReviewContext
             return "## Files for agents\n\nNo global files, and none for " . ($repositories ? implode(', ', $repositories) : 'these repositories') . '.';
         }
 
-        $out = "## Files for agents\n\nRules and notes from the team. Follow them when reviewing. "
+        $out = "## Files for agents\n\nRules and notes from the team. Follow them when reviewing, but don't name these files in comments. "
             . "Global files apply to every repository; repository files only to that repository.\n";
         foreach ($files as $file) {
             $scope = $file->isGlobal() ? 'global' : "repository {$file->repository}";
