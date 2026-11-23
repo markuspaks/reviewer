@@ -43,7 +43,7 @@ class PullRequestReviewController extends Controller
     {
         try {
             $pullRequest = $this->api->getPullRequest($workspace, $repository, $id);
-            $files = Diff::parse($this->api->getDiff($workspace, $repository, $id));
+            $files = Diff::sortByTree(Diff::parse($this->api->getDiff($workspace, $repository, $id)));
             $comments = new ReviewComments([
                 ...$this->api->getComments($workspace, $repository, $id),
                 ...$this->unsentComments($workspace, $repository, $id),

@@ -161,14 +161,14 @@ class Diff
             unset($node);
         }
 
-        return self::compact($root);
+        return self::compact($root, $files);
     }
 
-    protected static function compact(array $node): array
+    protected static function compact(array $node, array $files): array
     {
         $folders = [];
         foreach ($node['folders'] as $name => $child) {
-            $child = self::compact($child);
+            $child = self::compact($child, $files);
             while (count($child['folders']) === 1 && !$child['files']) {
                 $only = array_key_first($child['folders']);
                 $name .= '/' . $only;
@@ -177,8 +177,37 @@ class Diff
             $folders[$name] = $child;
         }
         ksort($folders, SORT_NATURAL | SORT_FLAG_CASE);
+        $indexes = $node['files'];
+        usort($indexes, fn (int $a, int $b) => strnatcasecmp(basename($files[$a]['path']), basename($files[$b]['path'])));
 
-        return ['folders' => $folders, 'files' => $node['files']];
+        return ['folders' => $folders, 'files' => $indexes];
+    }
+
+    /**
+     * Files reordered as the tree lists them (folders first, both sorted by name), so the diff pane follows the tree.
+     *
+     * @param array<int, array{path: string}> $files
+     * @return array<int, array{path: string}>
+     */
+    public static function sortByTree(array $files): array
+    {
+        $sorted = [];
+        foreach (self::flatten(self::tree($files)) as $index) {
+            $sorted[] = $files[$index];
+        }
+
+        return $sorted;
+    }
+
+    /** @return array<int, int> file indexes in tree order */
+    protected static function flatten(array $node): array
+    {
+        $indexes = [];
+        foreach ($node['folders'] as $folder) {
+            array_push($indexes, ...self::flatten($folder));
+        }
+
+        return [...$indexes, ...$node['files']];
     }
 
     protected static function pathFromMarker(string $marker, string $prefix): ?string
