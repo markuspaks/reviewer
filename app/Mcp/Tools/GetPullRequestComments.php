@@ -17,9 +17,10 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[IsReadOnly]
 #[Description(<<<'TEXT'
-    Comments on a pull request: the discussion in Bitbucket (threads with file and line) and the unsent comments already
-    saved in Reviewer, including ones from other agents. Read this before adding comments, so you don't repeat them;
-    reply to a Bitbucket comment with add_review_comment and its parent_id.
+    Comments on a pull request: the discussion in Bitbucket (threads with file and line, and whether each is resolved)
+    and the unsent comments already saved in Reviewer, including ones from other agents. Read this before adding
+    comments, so you don't repeat them; reply to a Bitbucket comment with add_review_comment and its parent_id, and
+    resolve a settled thread with resolve_comment_thread and its first comment's id.
     TEXT)]
 class GetPullRequestComments extends Tool
 {
@@ -82,7 +83,7 @@ class GetPullRequestComments extends Tool
             usort($thread, fn($a, $b) => strcmp($a['created_on'], $b['created_on']));
             $root = $byId[$rootId];
             $outdated = ($root['inline']['outdated'] ?? false) ? ' (outdated: the code changed since)' : '';
-            $out .= "\n### " . $this->location($root['inline'] ?? null) . "$outdated\n";
+            $out .= "\n### " . $this->location($root['inline'] ?? null) . "$outdated" . $this->resolution($root) . "\n";
             foreach ($thread as $comment) {
                 $out .= "\n- comment {$comment['id']} by " . ($comment['user']['display_name'] ?? '?')
                     . ', ' . Carbon::parse($comment['created_on'])->toDateTimeString()
@@ -92,6 +93,20 @@ class GetPullRequestComments extends Tool
         }
 
         return $out;
+    }
+
+    /**
+     * " — resolved by X, <date>" for a resolved thread; nothing for an open (or pending) one.
+     */
+    protected function resolution(array $root): string
+    {
+        $resolution = $root['resolution'] ?? null;
+        if (!$resolution) {
+            return '';
+        }
+
+        return ' — resolved' . (isset($resolution['user']['display_name']) ? " by {$resolution['user']['display_name']}" : '')
+            . (isset($resolution['created_on']) ? ', ' . Carbon::parse($resolution['created_on'])->toDateTimeString() : '');
     }
 
     protected function location(?array $inline): string

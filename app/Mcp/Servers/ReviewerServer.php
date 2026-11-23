@@ -11,6 +11,7 @@ use App\Mcp\Tools\GetPullRequestComments;
 use App\Mcp\Tools\GetPullRequestDiff;
 use App\Mcp\Tools\GetTicket;
 use App\Mcp\Tools\ListAgentFiles;
+use App\Mcp\Tools\ResolveCommentThread;
 use App\Mcp\Tools\SaveAgentFile;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
@@ -32,6 +33,9 @@ use Laravel\Mcp\Server\Attributes\Version;
        Always pass your model name and reasoning effort. Comments are saved unsent; the human reviewer checks and sends them.
        To fix or withdraw your own unsent comments (listed as drafts by get_pull_request_comments), use edit_review_comment
        or delete_review_comments; the reviewer's own comments can't be changed.
+    4. When the reviewer asks you to resolve a thread (or reopen one), use resolve_comment_thread with the id of its
+       first comment. Unlike comments this acts in Bitbucket at once, as the reviewer, so don't resolve threads on
+       your own judgement.
     To learn what the team's reviewers ask for, read get_previous_comments for a repository (pass the changed files as paths).
     When asked, turn recurring feedback into rules with save_agent_file (global, or for one repository); read the existing
     files with list_agent_files first and don't duplicate them.
@@ -47,6 +51,7 @@ class ReviewerServer extends Server
         AddReviewComment::class,
         EditReviewComment::class,
         DeleteReviewComments::class,
+        ResolveCommentThread::class,
         ListAgentFiles::class,
         SaveAgentFile::class,
     ];
