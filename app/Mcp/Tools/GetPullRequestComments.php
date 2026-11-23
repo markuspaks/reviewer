@@ -100,8 +100,9 @@ class GetPullRequestComments extends Tool
      */
     protected function resolution(array $root): string
     {
+        // The list may return it empty ({}), which still means resolved.
         $resolution = $root['resolution'] ?? null;
-        if (!$resolution) {
+        if ($resolution === null) {
             return '';
         }
 

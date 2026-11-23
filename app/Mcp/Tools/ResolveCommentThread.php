@@ -73,7 +73,7 @@ class ResolveCommentThread extends Tool
         }
 
         $resolution = $comment['resolution'] ?? null;
-        if ($resolution) {
+        if ($resolution !== null) {
             $by = array_filter([
                 isset($resolution['user']['display_name']) ? "by {$resolution['user']['display_name']}" : null,
                 isset($resolution['created_on']) ? Carbon::parse($resolution['created_on'])->toDateTimeString() . ' UTC' : null,

@@ -1,7 +1,8 @@
 {{-- Resolve or reopen a thread in Bitbucket; who resolved it. $root is the thread's first comment. --}}
+{{-- A resolved thread has a "resolution", which the comment list may return empty (then only that it is resolved is known). --}}
 @php $resolution = $root['resolution'] ?? null; @endphp
 <span class="thread-resolution js-thread-resolution">
-    @if($resolution)
+    @if($resolution !== null)
         <span class="thread-resolved-by has-text-success">
             ✓ Resolved{{ isset($resolution['user']['display_name']) ? ' by ' . $resolution['user']['display_name'] : '' }}
             @isset($resolution['created_on'])

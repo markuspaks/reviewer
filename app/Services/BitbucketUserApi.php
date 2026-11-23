@@ -93,7 +93,9 @@ class BitbucketUserApi
     {
         $comments = [];
         $url = $this->path($workspace, $repository, $id) . '/comments';
-        $query = ['pagelen' => 100, 'sort' => 'created_on'];
+        // The list leaves a resolved thread's "resolution" empty ({}): ask for who resolved it and when, as the
+        // single-comment endpoint gives them. The "next" links carry the fields along.
+        $query = ['pagelen' => 100, 'sort' => 'created_on', 'fields' => '+values.resolution.*'];
         while ($url !== null) {
             $page = $this->http()->get($url, $query)->throw()->json();
             array_push($comments, ...($page['values'] ?? []));
