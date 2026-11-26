@@ -94,15 +94,22 @@ class BitbucketUserApi
     public function getComments(string $workspace, string $repository, int $id): array
     {
         $comments = [];
-        $url = $this->path($workspace, $repository, $id) . '/comments';
         // The list leaves a resolved thread's "resolution" empty ({}): ask for who resolved it and when, as the
-        // single-comment endpoint gives them. The "next" links carry the fields along.
-        $query = ['pagelen' => 100, 'sort' => 'created_on', 'fields' => '+values.resolution.*'];
+        // single-comment endpoint gives them. The "next" links carry the fields and the page number along, so they
+        // are followed as given: a query argument, even an empty one, would replace their query string, and the
+        // first page would come back again and again.
+        $url = $this->path($workspace, $repository, $id) . '/comments?'
+            . http_build_query(['pagelen' => 100, 'sort' => 'created_on', 'fields' => '+values.resolution.*']);
+        $seen = [];
         while ($url !== null) {
-            $page = $this->http()->get($url, $query)->throw()->json();
+            if (isset($seen[$url])) {
+                // Better an error than a request that never ends.
+                throw new RuntimeException("Bitbucket keeps returning the same page of comments: $url");
+            }
+            $seen[$url] = true;
+            $page = $this->http()->get($url)->throw()->json();
             array_push($comments, ...($page['values'] ?? []));
             $url = $page['next'] ?? null;
-            $query = [];
         }
 
         return $comments;
