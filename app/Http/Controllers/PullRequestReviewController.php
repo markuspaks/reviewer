@@ -39,11 +39,20 @@ class PullRequestReviewController extends Controller
     {
     }
 
-    public function show(string $workspace, string $repository, int $id, Jira $jira): View|RedirectResponse
+    /**
+     * With ?ignore_whitespace=1, changes in whitespace only are shown as unchanged.
+     */
+    public function show(Request $request, string $workspace, string $repository, int $id, Jira $jira): View|RedirectResponse
     {
+        $ignoreWhitespace = $request->boolean('ignore_whitespace');
+
         try {
             $pullRequest = $this->api->getPullRequest($workspace, $repository, $id);
-            $files = Diff::sortByTree(Diff::parse($this->api->getDiff($workspace, $repository, $id)));
+            $files = Diff::parse($this->api->getDiff($workspace, $repository, $id));
+            if ($ignoreWhitespace) {
+                $files = Diff::ignoreWhitespace($files);
+            }
+            $files = Diff::sortByTree($files);
             $comments = new ReviewComments([
                 ...$this->api->getComments($workspace, $repository, $id),
                 ...$this->unsentComments($workspace, $repository, $id),
@@ -75,6 +84,7 @@ class PullRequestReviewController extends Controller
             'files' => $files,
             'tree' => Diff::tree($files),
             'comments' => $comments,
+            'ignoreWhitespace' => $ignoreWhitespace,
             'collapseLines' => self::COLLAPSE_LINES,
             'lastPipeline' => $snapshot?->last_pipeline,
             'issueKey' => $issueKey,

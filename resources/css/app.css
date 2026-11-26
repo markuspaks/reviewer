@@ -210,20 +210,24 @@ table.reviews td {
     display: none;
 }
 
-/* Viewed count and Previous / Next unviewed file, left of Approve; the side column toggles left of those. */
+/* Viewed count and Previous / Next unviewed file, left of Approve; the side column toggles left of those,
+   and the whitespace toggle left of those. */
 .review-file-nav.buttons,
-.review-pane-toggles.buttons {
+.review-pane-toggles.buttons,
+.review-whitespace-toggle.buttons {
     float: right;
     margin: 2px 0 4px 12px;
     flex-wrap: nowrap;
 }
 
 .review-file-nav .button,
-.review-pane-toggles .button {
+.review-pane-toggles .button,
+.review-whitespace-toggle .button {
     margin-bottom: 0;
 }
 
-.review-pane-toggles .button.is-selected {
+.review-pane-toggles .button.is-selected,
+.review-whitespace-toggle .button.is-selected {
     background: rgba(72, 95, 199, 0.15);
     border-color: rgba(72, 95, 199, 0.4);
 }
@@ -412,6 +416,43 @@ body.is-resizing-review {
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
+}
+
+/* The comments column is split in sections that fold up: unsent, unresolved, resolved. */
+.drafts-section + .drafts-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.drafts-section > summary {
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.drafts-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.drafts-section > summary::before {
+    content: "";
+    flex: none;
+    width: 0.5em;
+    height: 0.5em;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s;
+    opacity: 0.6;
+}
+
+.drafts-section[open] > summary::before {
+    transform: rotate(45deg);
+}
+
+.drafts-section:not([open]) > summary {
+    margin-bottom: 0;
 }
 
 .files-actions {
@@ -1151,6 +1192,12 @@ body.is-resizing-review {
 
 .tree-file a.is-viewed .tree-file-name {
     opacity: 0.55;
+}
+
+/* Only whitespace changes, hidden while whitespace is ignored. */
+.tree-file a.is-whitespace-only .tree-file-name {
+    opacity: 0.55;
+    font-style: italic;
 }
 
 .files-title {

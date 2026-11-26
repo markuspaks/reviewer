@@ -59,13 +59,15 @@ class BitbucketUserApi
 
     /**
      * Unified diff of the pull request (git format).
+     *
+     * @param bool $ignoreWhitespace leave out changes in whitespace only, as "git diff -w" (done by Bitbucket)
      */
-    public function getDiff(string $workspace, string $repository, int $id): string
+    public function getDiff(string $workspace, string $repository, int $id, bool $ignoreWhitespace = false): string
     {
         return $this->http()
             ->withHeaders(['Accept' => 'text/plain'])
             ->timeout(120)
-            ->get($this->path($workspace, $repository, $id) . '/diff')
+            ->get($this->path($workspace, $repository, $id) . '/diff', $ignoreWhitespace ? ['ignore_whitespace' => 'true'] : [])
             ->throw()
             ->body();
     }

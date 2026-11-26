@@ -33,11 +33,17 @@
             <button type="button" class="button js-file-prev" title="Previous file not viewed yet (p)">↑ Previous file</button>
             <button type="button" class="button js-file-next" title="Next file not viewed yet (n)">↓ Next file</button>
         </div>
+        {{-- Show changes in whitespace only as unchanged (also w). Reloads the page with ?ignore_whitespace=1. --}}
+        <div class="review-whitespace-toggle buttons are-small">
+            <a class="button js-toggle-whitespace @if($ignoreWhitespace) is-selected @endif" aria-pressed="{{ $ignoreWhitespace ? 'true' : 'false' }}"
+               href="{{ route('pull-requests.review', [$workspace, $repository, $pullRequest['id']] + ($ignoreWhitespace ? [] : ['ignore_whitespace' => 1])) }}"
+               title="{{ $ignoreWhitespace ? 'Changes in whitespace only are hidden. Click to show them (w)' : 'Hide changes in whitespace only: indentation and spacing (w)' }}">Ignore whitespace</a>
+        </div>
         {{-- Hide or show the side columns (also [ and ]). --}}
         <div class="review-pane-toggles buttons are-small has-addons">
             <button type="button" class="button js-toggle-pane" data-side="left" aria-pressed="true" title="Hide or show the file list ([)">Files</button>
-            <button type="button" class="button js-toggle-pane" data-side="right" aria-pressed="true" title="Hide or show the unsent comments (])">
-                Not sent <span class="tag is-warning is-rounded js-drafts-count">{{ $comments->unsentCount }}</span>
+            <button type="button" class="button js-toggle-pane" data-side="right" aria-pressed="true" title="Hide or show the comments column (])">
+                Comments <span class="tag is-warning is-rounded js-drafts-count" title="Not sent yet">{{ $comments->unsentCount }}</span>
             </button>
         </div>
         <p class="review-repo">
@@ -150,6 +156,8 @@
 
                         @if($file['binary'])
                             <p class="diff-note">Binary file, not shown.</p>
+                        @elseif($file['whitespace_only'])
+                            <p class="diff-note">Only whitespace changes, hidden.</p>
                         @elseif(!$file['hunks'])
                             <p class="diff-note">No content changes{{ $file['status'] === Diff::RENAMED ? ' (renamed only)' : '' }}.</p>
                         @else
@@ -202,36 +210,61 @@
             @endforeach
         </main>
 
-        {{-- Unsent comments and sending them, in their own column right of the diff. --}}
+        {{-- Comments in their own column right of the diff: unsent ones and sending them, then the threads in Bitbucket. --}}
         <aside class="review-drafts">
             <div class="drafts-panel box">
-                <div class="drafts-title">
-                    <strong>Not sent yet</strong>
-                    <span class="tag is-warning js-drafts-count">{{ $comments->unsentCount }}</span>
-                </div>
-                <div class="drafts-nav buttons are-small">
-                    <button type="button" class="button js-draft-prev" title="Previous unsent comment (k)">↑ Previous</button>
-                    <button type="button" class="button js-draft-next" title="Next unsent comment (j)">↓ Next</button>
-                </div>
-                <ol class="drafts-list js-drafts-list"></ol>
-                <p class="drafts-empty js-drafts-empty">Click <strong>+</strong> next to a line to comment. Comments are saved here, visible only to you, until you send them.</p>
-                <button type="button" class="button is-primary is-small is-fullwidth js-publish" disabled>Send to Bitbucket</button>
-                <p class="help js-publish-help">Adds them all at once to your draft review in Bitbucket. Others see them only after you finish the review there.</p>
-                <label class="checkbox drafts-filter">
-                    <input type="checkbox" class="js-hide-sent">
-                    Hide comments already in Bitbucket
-                </label>
-                @if($comments->bitbucketDraftCount)
-                    <div class="drafts-bitbucket">
-                        <p class="help">
-                            {{ $comments->bitbucketDraftCount }} {{ Str::plural('comment', $comments->bitbucketDraftCount) }}
-                            {{ $comments->bitbucketDraftCount === 1 ? 'is' : 'are' }} in your draft review in Bitbucket
-                            (marked <span class="tag is-info is-light is-small">Bitbucket draft</span>), visible only to you.
-                            Finish the review there to publish {{ $comments->bitbucketDraftCount === 1 ? 'it' : 'them' }}, and to approve or request changes.
-                        </p>
-                        <a class="button is-info is-light is-small is-fullwidth" href="{{ $bitbucketUrl }}" target="_blank" rel="noopener noreferrer">Finish review in Bitbucket</a>
+                <details class="drafts-section js-drafts-section" data-section="unsent" open>
+                    <summary class="drafts-title">
+                        <strong>Not sent yet</strong>
+                        <span class="tag is-warning js-drafts-count">{{ $comments->unsentCount }}</span>
+                    </summary>
+                    <div class="drafts-section-body">
+                        <div class="drafts-nav buttons are-small">
+                            <button type="button" class="button js-draft-prev" title="Previous unsent comment (k)">↑ Previous</button>
+                            <button type="button" class="button js-draft-next" title="Next unsent comment (j)">↓ Next</button>
+                        </div>
+                        <ol class="drafts-list js-drafts-list"></ol>
+                        <p class="drafts-empty js-drafts-empty">Click <strong>+</strong> next to a line to comment. Comments are saved here, visible only to you, until you send them.</p>
+                        <button type="button" class="button is-primary is-small is-fullwidth js-publish" disabled>Send to Bitbucket</button>
+                        <p class="help js-publish-help">Adds them all at once to your draft review in Bitbucket. Others see them only after you finish the review there.</p>
+                        <label class="checkbox drafts-filter">
+                            <input type="checkbox" class="js-hide-sent">
+                            Hide comments already in Bitbucket
+                        </label>
+                        @if($comments->bitbucketDraftCount)
+                            <div class="drafts-bitbucket">
+                                <p class="help">
+                                    {{ $comments->bitbucketDraftCount }} {{ Str::plural('comment', $comments->bitbucketDraftCount) }}
+                                    {{ $comments->bitbucketDraftCount === 1 ? 'is' : 'are' }} in your draft review in Bitbucket
+                                    (marked <span class="tag is-info is-light is-small">Bitbucket draft</span>), visible only to you.
+                                    Finish the review there to publish {{ $comments->bitbucketDraftCount === 1 ? 'it' : 'them' }}, and to approve or request changes.
+                                </p>
+                                <a class="button is-info is-light is-small is-fullwidth" href="{{ $bitbucketUrl }}" target="_blank" rel="noopener noreferrer">Finish review in Bitbucket</a>
+                            </div>
+                        @endif
                     </div>
-                @endif
+                </details>
+                {{-- Threads already in Bitbucket, filled in by review.js from the threads on the diff. --}}
+                <details class="drafts-section js-drafts-section" data-section="unresolved" open>
+                    <summary class="drafts-title">
+                        <strong>Unresolved</strong>
+                        <span class="tag is-light js-threads-count" data-section="unresolved">0</span>
+                    </summary>
+                    <div class="drafts-section-body">
+                        <ol class="drafts-list js-threads-list" data-section="unresolved"></ol>
+                        <p class="drafts-empty js-threads-empty" data-section="unresolved">No open comment threads in Bitbucket.</p>
+                    </div>
+                </details>
+                <details class="drafts-section js-drafts-section" data-section="resolved">
+                    <summary class="drafts-title">
+                        <strong>Resolved</strong>
+                        <span class="tag is-light js-threads-count" data-section="resolved">0</span>
+                    </summary>
+                    <div class="drafts-section-body">
+                        <ol class="drafts-list js-threads-list" data-section="resolved"></ol>
+                        <p class="drafts-empty js-threads-empty" data-section="resolved">No resolved comment threads.</p>
+                    </div>
+                </details>
             </div>
         </aside>
     </div>

@@ -12,10 +12,13 @@ class Diff
     public const RENAMED = 'renamed';
     public const MODIFIED = 'modified';
 
+    /** Largest change block (removed lines × added lines) matched up fully when ignoring whitespace. */
+    protected const MATCH_CELLS = 250_000;
+
     /**
      * @return array<int, array{
      *     path: string, old_path: ?string, new_path: ?string, status: string, binary: bool,
-     *     additions: int, deletions: int, version: string,
+     *     additions: int, deletions: int, version: string, whitespace_only: bool,
      *     hunks: array<int, array{header: string, old_start: int, old_count: int, new_start: int, new_count: int, lines: array<int, array{type: string, old: ?int, new: ?int, text: string}>}>
      * }>
      */
@@ -89,7 +92,7 @@ class Diff
                 [$oldPath, $newPath] = self::pathsFromGitHeader(substr($line, 11));
                 $file = [
                     'path' => '', 'old_path' => $oldPath, 'new_path' => $newPath, 'status' => self::MODIFIED,
-                    'binary' => false, 'additions' => 0, 'deletions' => 0, 'hunks' => [],
+                    'binary' => false, 'additions' => 0, 'deletions' => 0, 'whitespace_only' => false, 'hunks' => [],
                 ];
                 continue;
             }
@@ -138,6 +141,192 @@ class Diff
         }
 
         return $files;
+    }
+
+    /**
+     * The parsed diff with changes in whitespace only (indentation, spacing within a line) shown as unchanged, as
+     * "git diff -w" does: in each block of changed lines, a removed and an added line that are equal but for
+     * whitespace become one context line, keeping their line numbers. Hunks left without changes are dropped, and a
+     * file left without any is flagged 'whitespace_only'. Each file's version stays that of the full diff, so a file
+     * marked as viewed counts as viewed either way.
+     *
+     * @param array<int, array> $files from parse()
+     * @return array<int, array>
+     */
+    public static function ignoreWhitespace(array $files): array
+    {
+        foreach ($files as &$file) {
+            $hadChanges = $file['additions'] + $file['deletions'] > 0;
+            $file['additions'] = $file['deletions'] = 0;
+            $hunks = [];
+            foreach ($file['hunks'] as $hunk) {
+                $hunk['lines'] = self::foldWhitespaceChanges($hunk['lines']);
+                $types = array_count_values(array_column($hunk['lines'], 'type'));
+                $additions = $types['add'] ?? 0;
+                $deletions = $types['del'] ?? 0;
+                if ($additions + $deletions === 0) {
+                    continue;
+                }
+                $file['additions'] += $additions;
+                $file['deletions'] += $deletions;
+                $hunks[] = $hunk;
+            }
+            $file['hunks'] = $hunks;
+            $file['whitespace_only'] = $hadChanges && !$hunks;
+        }
+        unset($file);
+
+        return $files;
+    }
+
+    /**
+     * A hunk's lines with each block of changed lines folded: see ignoreWhitespace().
+     *
+     * @param array<int, array{type: string, old: ?int, new: ?int, text: string}> $lines
+     * @return array<int, array{type: string, old: ?int, new: ?int, text: string}>
+     */
+    protected static function foldWhitespaceChanges(array $lines): array
+    {
+        $result = [];
+        $block = [];
+        $flush = function () use (&$result, &$block) {
+            if ($block) {
+                array_push($result, ...self::foldBlock($block));
+                $block = [];
+            }
+        };
+        foreach ($lines as $line) {
+            if ($line['type'] === 'context' || ($line['type'] === 'meta' && !$block)) {
+                $flush();
+                $result[] = $line;
+            } else {
+                $block[] = $line;
+            }
+        }
+        $flush();
+
+        return $result;
+    }
+
+    /**
+     * One block of removed and added lines (git lists the removed ones first), with pairs equal but for whitespace
+     * turned into context lines. A "\ No newline at end of file" note stays with the line before it.
+     */
+    protected static function foldBlock(array $block): array
+    {
+        $dels = $adds = $notes = [];
+        $last = null;
+        foreach ($block as $line) {
+            if ($line['type'] === 'meta') {
+                $notes[$last][] = $line;
+            } elseif ($line['type'] === 'del') {
+                $dels[] = $line;
+                $last = 'd' . (count($dels) - 1);
+            } else {
+                $adds[] = $line;
+                $last = 'a' . (count($adds) - 1);
+            }
+        }
+        if (!$dels || !$adds) {
+            return $block;
+        }
+
+        $normalize = fn (array $line) => preg_replace('/\s+/', '', $line['text']);
+        $pairs = self::matchLines(array_map($normalize, $dels), array_map($normalize, $adds));
+
+        $out = [];
+        $emit = function (array $line, string $key) use (&$out, $notes) {
+            $out[] = $line;
+            array_push($out, ...($notes[$key] ?? []));
+        };
+        $i = $j = 0;
+        foreach ($pairs as [$d, $a]) {
+            for (; $i < $d; $i++) {
+                $emit($dels[$i], "d$i");
+            }
+            for (; $j < $a; $j++) {
+                $emit($adds[$j], "a$j");
+            }
+            $out[] = ['type' => 'context', 'old' => $dels[$d]['old'], 'new' => $adds[$a]['new'], 'text' => $adds[$a]['text']];
+            array_push($out, ...($notes["d$d"] ?? []), ...($notes["a$a"] ?? []));
+            $i = $d + 1;
+            $j = $a + 1;
+        }
+        for (; $i < count($dels); $i++) {
+            $emit($dels[$i], "d$i");
+        }
+        for (; $j < count($adds); $j++) {
+            $emit($adds[$j], "a$j");
+        }
+
+        return $out;
+    }
+
+    /**
+     * Pairs of equal lines, as [index in $a, index in $b], both increasing: the longest common subsequence after
+     * taking off the equal start and end. A middle part too large to match in full is paired up line by line.
+     *
+     * @param array<int, string> $a
+     * @param array<int, string> $b
+     * @return array<int, array{0: int, 1: int}>
+     */
+    protected static function matchLines(array $a, array $b): array
+    {
+        $m = count($a);
+        $n = count($b);
+        $start = 0;
+        while ($start < $m && $start < $n && $a[$start] === $b[$start]) {
+            $start++;
+        }
+        $endA = $m;
+        $endB = $n;
+        while ($endA > $start && $endB > $start && $a[$endA - 1] === $b[$endB - 1]) {
+            $endA--;
+            $endB--;
+        }
+
+        $pairs = [];
+        for ($k = 0; $k < $start; $k++) {
+            $pairs[] = [$k, $k];
+        }
+
+        $midA = $endA - $start;
+        $midB = $endB - $start;
+        if ($midA > 0 && $midB > 0 && $midA * $midB <= self::MATCH_CELLS) {
+            // Length of the longest common subsequence of a[start+i..] and b[start+j..].
+            $length = array_fill(0, $midA + 1, array_fill(0, $midB + 1, 0));
+            for ($i = $midA - 1; $i >= 0; $i--) {
+                for ($j = $midB - 1; $j >= 0; $j--) {
+                    $length[$i][$j] = $a[$start + $i] === $b[$start + $j]
+                        ? $length[$i + 1][$j + 1] + 1
+                        : max($length[$i + 1][$j], $length[$i][$j + 1]);
+                }
+            }
+            $i = $j = 0;
+            while ($i < $midA && $j < $midB) {
+                if ($a[$start + $i] === $b[$start + $j]) {
+                    $pairs[] = [$start + $i, $start + $j];
+                    $i++;
+                    $j++;
+                } elseif ($length[$i + 1][$j] >= $length[$i][$j + 1]) {
+                    $i++;
+                } else {
+                    $j++;
+                }
+            }
+        } elseif ($midA > 0 && $midB > 0) {
+            for ($k = 0; $k < min($midA, $midB); $k++) {
+                if ($a[$start + $k] === $b[$start + $k]) {
+                    $pairs[] = [$start + $k, $start + $k];
+                }
+            }
+        }
+
+        for ($k = 0; $k < $m - $endA; $k++) {
+            $pairs[] = [$endA + $k, $endB + $k];
+        }
+
+        return $pairs;
     }
 
     /**

@@ -131,6 +131,53 @@ if (review) {
             ? `Send ${items.length} ${items.length === 1 ? 'comment' : 'comments'} to Bitbucket`
             : 'Send to Bitbucket';
         review.querySelector('.js-publish-help').hidden = items.length === 0;
+        refreshThreads();
+    };
+
+    // The threads already in Bitbucket, unresolved and resolved, listed like the unsent comments.
+    const threadsIn = (section) => [...review.querySelectorAll(
+        section === 'resolved' ? '.thread.is-resolved' : '.thread:not(.is-unsent):not(.is-resolved)',
+    )];
+
+    const refreshThreads = () => {
+        ['unresolved', 'resolved'].forEach((section) => {
+            const items = threadsIn(section);
+            review.querySelector(`.js-threads-list[data-section="${section}"]`).replaceChildren(...items.map((thread) => {
+                const root = thread.querySelector(':scope > .comment');
+                // The first comment still there: the root may be deleted.
+                const shown = [root, ...thread.querySelectorAll(':scope > .replies > .comment')]
+                    .find((comment) => !comment.querySelector('.comment-deleted')) ?? root;
+                const li = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = `#${root.id}`;
+                link.dataset.threadId = thread.dataset.threadId;
+                const where = document.createElement('span');
+                where.className = 'draft-where';
+                where.textContent = draftLabel(root);
+                const text = document.createElement('span');
+                text.className = 'draft-text';
+                const author = shown.querySelector('.comment-header strong')?.textContent.trim();
+                const raw = shown.querySelector('.comment-raw')?.value.slice(0, 80) ?? '';
+                text.textContent = author ? `${author}: ${raw}` : raw;
+                link.append(where, text);
+                li.append(link);
+                return li;
+            }));
+            review.querySelector(`.js-threads-count[data-section="${section}"]`).textContent = items.length;
+            review.querySelector(`.js-threads-empty[data-section="${section}"]`).hidden = items.length > 0;
+        });
+    };
+
+    const showThread = (thread) => {
+        if (hideSent.checked && !thread.querySelector('.comment.is-unsent')) {
+            // Hidden by the filter: show the sent comments again to get to it.
+            hideSent.checked = false;
+            hideSent.dispatchEvent(new Event('change'));
+        }
+        if (thread.classList.contains('is-resolved')) {
+            expandThread(thread, true);
+        }
+        showComment(thread.querySelector(':scope > .comment'));
     };
 
     const showComment = (comment) => {
@@ -238,6 +285,7 @@ if (review) {
             thread.querySelector(':scope > .thread-footer .js-thread-resolution').replaceWith(htmlToElement(data.html));
             thread.classList.toggle('is-resolved', data.resolved);
             expandThread(thread, false);
+            refreshThreads();
         } catch (e) {
             button.classList.remove('is-loading');
             alert(errorMessage(e));
@@ -359,6 +407,26 @@ if (review) {
         } catch {
             // Not remembered.
         }
+    });
+
+    // The sections of the comments column fold up; which are open is remembered.
+    review.querySelectorAll('.js-drafts-section').forEach((section) => {
+        const key = `review.section.${section.dataset.section}`;
+        try {
+            const saved = localStorage.getItem(key);
+            if (saved !== null) {
+                section.open = saved === '1';
+            }
+        } catch {
+            // Storage blocked: the default.
+        }
+        section.addEventListener('toggle', () => {
+            try {
+                localStorage.setItem(key, section.open ? '1' : '0');
+            } catch {
+                // Not remembered.
+            }
+        });
     });
 
     // --- Viewed files ---------------------------------------------------------------------------------
@@ -763,6 +831,10 @@ if (review) {
             const link = action('.js-drafts-list a');
             currentDraft = Number(link.dataset.draftIndex);
             showComment(document.getElementById(link.getAttribute('href').slice(1)));
+        } else if (action('.js-threads-list a')) {
+            event.preventDefault();
+            const link = action('.js-threads-list a');
+            showThread(review.querySelector(`.thread[data-thread-id="${link.dataset.threadId}"]`));
         } else if (action('.js-toggle-file')) {
             target.closest('.diff-file').classList.toggle('is-collapsed');
         } else if (action('.js-expand-all')) {
@@ -777,7 +849,15 @@ if (review) {
         }
     });
 
-    // j / k jump between drafts, n / p between files not viewed yet, [ / ] hide or show the side columns (when not typing).
+    // Ignoring whitespace reloads the page: stay at the same file.
+    const whitespaceToggle = review.querySelector('.js-toggle-whitespace');
+    whitespaceToggle?.addEventListener('click', (event) => {
+        event.preventDefault();
+        location.href = whitespaceToggle.href + location.hash;
+    });
+
+    // j / k jump between drafts, n / p between files not viewed yet, [ / ] hide or show the side columns,
+    // w ignores whitespace or shows it again (when not typing).
     document.addEventListener('keydown', (event) => {
         if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) {
             return;
@@ -794,6 +874,8 @@ if (review) {
             togglePane('left');
         } else if (event.key === ']') {
             togglePane('right');
+        } else if (event.key === 'w') {
+            whitespaceToggle?.click();
         }
     });
 

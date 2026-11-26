@@ -19,6 +19,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     The changes of a pull request as a unified git diff, read live from Bitbucket, with a list of changed files first.
     Line numbers for add_review_comment come from the hunks: "new" side for added and unchanged lines, "old" side for removed lines.
     Large diffs are cut off; pass "paths" to read only some files.
+    Pass "ignore_whitespace" to leave out changes in whitespace only (indentation, spacing), as "git diff -w" does.
     TEXT)]
 class GetPullRequestDiff extends Tool
 {
@@ -32,6 +33,7 @@ class GetPullRequestDiff extends Tool
         $data = $request->validate(PullRequestArguments::rules() + [
             'paths' => ['nullable', 'array', 'max:200'],
             'paths.*' => ['string', 'max:1000'],
+            'ignore_whitespace' => ['nullable', 'boolean'],
         ]);
         $id = (int) $data['pull_request_id'];
         if (ReviewContext::findPullRequest($data['repository'], $id) === null) {
@@ -43,7 +45,7 @@ class GetPullRequestDiff extends Tool
 
         [$workspace, $repository] = explode('/', $data['repository'], 2);
         try {
-            $diff = BitbucketUserApi::withAppCredentials()->getDiff($workspace, $repository, $id);
+            $diff = BitbucketUserApi::withAppCredentials()->getDiff($workspace, $repository, $id, (bool) ($data['ignore_whitespace'] ?? false));
         } catch (RequestException|ConnectionException $e) {
             return Response::error('Bitbucket: ' . (($e instanceof RequestException ? $e->response->json('error.message') : null) ?? $e->getMessage()));
         }
@@ -95,6 +97,7 @@ class GetPullRequestDiff extends Tool
     {
         return PullRequestArguments::schema($schema) + [
             'paths' => $schema->array()->items($schema->string())->description('Optional: only these file paths (as in the changed files list).'),
+            'ignore_whitespace' => $schema->boolean()->description('Optional: leave out changes in whitespace only (indentation, spacing within a line), as "git diff -w".'),
         ];
     }
 }

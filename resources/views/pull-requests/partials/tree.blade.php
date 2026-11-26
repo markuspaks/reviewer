@@ -13,7 +13,8 @@
             $commentCount = $comments->countForFile($file['path']);
         @endphp
         <li class="tree-file">
-            <a href="#file-{{ $index }}" class="js-tree-link @if($file['viewed']) is-viewed @endif" data-file-index="{{ $index }}" title="{{ $file['path'] }}">
+            <a href="#file-{{ $index }}" class="js-tree-link @if($file['viewed']) is-viewed @endif @if($file['whitespace_only']) is-whitespace-only @endif"
+               data-file-index="{{ $index }}" title="{{ $file['path'] }}{{ $file['whitespace_only'] ? ' (only whitespace changes)' : '' }}">
                 <span class="file-status status-{{ $file['status'] }}" title="{{ $file['status'] }}">{{ strtoupper($file['status'][0]) }}</span>
                 <span class="tree-file-name">{{ basename($file['path']) }}</span>
                 <span class="tree-viewed" title="Viewed" aria-label="Viewed">✓</span>
