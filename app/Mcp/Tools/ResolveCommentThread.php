@@ -16,9 +16,9 @@ use Laravel\Mcp\Server\Tool;
 #[Description(<<<'TEXT'
     Resolve a comment thread in Bitbucket, or reopen it with resolved false. Unlike comments, which are saved unsent,
     this acts in Bitbucket at once, as the reviewer (with their Bitbucket token): use it when the reviewer asks you
-    to resolve or reopen a thread, not on your own judgement. Pass the id of the thread's first comment (from
-    get_pull_request_comments; a reply can't be resolved on its own). Unsent comments in Reviewer and pending draft
-    comments have no thread to resolve.
+    to resolve or reopen a thread, or only as the team's files for agents allow. Pass the id of the thread's first
+    comment (from get_pull_request_comments; a reply can't be resolved on its own). Unsent comments in Reviewer and
+    pending draft comments have no thread to resolve.
     TEXT)]
 class ResolveCommentThread extends Tool
 {
