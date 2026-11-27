@@ -134,19 +134,26 @@ if (review) {
         refreshThreads();
     };
 
-    // The section of the comments column a thread is listed in.
+    // The section of the comments column a thread is listed in. An open thread where someone else wrote last
+    // awaits the user's reply; an unsent reply counts as one.
     const threadSection = (thread) => {
         if (thread.classList.contains('is-unsent')) {
             return 'unsent';
         }
-        return thread.classList.contains('is-resolved') ? 'resolved' : 'unresolved';
+        if (thread.classList.contains('is-resolved')) {
+            return 'resolved';
+        }
+        const last = [...thread.querySelectorAll(':scope > .comment, :scope > .replies > .comment')]
+            .filter((comment) => !comment.querySelector('.comment-deleted'))
+            .at(-1);
+        return last && !last.matches('.is-own, .is-unsent') ? 'unanswered' : 'unresolved';
     };
 
     // The threads already in Bitbucket, unresolved and resolved, listed like the unsent comments.
     const threadsIn = (section) => [...review.querySelectorAll('.thread')].filter((thread) => threadSection(thread) === section);
 
     const refreshThreads = () => {
-        ['unresolved', 'resolved'].forEach((section) => {
+        ['unanswered', 'unresolved', 'resolved'].forEach((section) => {
             const items = threadsIn(section);
             review.querySelector(`.js-threads-list[data-section="${section}"]`).replaceChildren(...items.map((thread) => {
                 const root = thread.querySelector(':scope > .comment');
@@ -423,6 +430,7 @@ if (review) {
         });
         review.querySelectorAll('.thread').forEach((thread) => {
             const section = threadSection(thread);
+            thread.dataset.section = section;
             const kept = thread.querySelector(section === 'unsent' ? '.comment-form' : '.comment.is-unsent, .comment-form');
             thread.classList.toggle('is-folded', folded[section] && !kept);
         });

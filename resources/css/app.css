@@ -944,8 +944,9 @@ body.is-resizing-review {
 .thread.is-folded,
 .comments-row.is-folded:not(:has(.comment-form)),
 .review.hide-unsent .thread:not(.is-unsent) .replies .comment.is-unsent:not(:has(.comment-form)),
-.review.hide-unresolved .thread:not(.is-unsent, .is-resolved) .replies .comment:not(.is-unsent),
-.review.hide-resolved .thread.is-resolved .replies .comment:not(.is-unsent) {
+.review.hide-unanswered .thread[data-section="unanswered"] .replies .comment:not(.is-unsent),
+.review.hide-unresolved .thread[data-section="unresolved"] .replies .comment:not(.is-unsent),
+.review.hide-resolved .thread[data-section="resolved"] .replies .comment:not(.is-unsent) {
     display: none;
 }
 

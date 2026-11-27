@@ -11,7 +11,7 @@
         default => null,
     };
 @endphp
-<article class="comment @if($isUnsent) is-unsent @elseif($isBitbucketDraft) is-bitbucket-draft @endif"
+<article class="comment @if($isUnsent) is-unsent @elseif($isBitbucketDraft) is-bitbucket-draft @endif @if($isOwn) is-own @endif"
          id="comment-{{ $comment['id'] }}" data-comment-id="{{ $comment['id'] }}"
          @if($editable) data-editable="{{ $editable }}" @endif @if($isUnsent) data-draft-id="{{ $comment['draft_id'] }}" @endif>
     @if($comment['deleted'] ?? false)

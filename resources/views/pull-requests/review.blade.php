@@ -241,14 +241,24 @@
                     </div>
                 </details>
                 {{-- Threads already in Bitbucket, filled in by review.js from the threads on the diff. --}}
+                <details class="drafts-section js-drafts-section" data-section="unanswered" open>
+                    <summary class="drafts-title" title="Open threads where someone else wrote last">
+                        <strong>Unanswered</strong>
+                        <span class="tag is-light js-threads-count" data-section="unanswered">0</span>
+                    </summary>
+                    <div class="drafts-section-body">
+                        <ol class="drafts-list js-threads-list" data-section="unanswered"></ol>
+                        <p class="drafts-empty js-threads-empty" data-section="unanswered">No open threads awaiting your reply.</p>
+                    </div>
+                </details>
                 <details class="drafts-section js-drafts-section" data-section="unresolved" open>
-                    <summary class="drafts-title">
+                    <summary class="drafts-title" title="Open threads where you wrote last">
                         <strong>Unresolved</strong>
                         <span class="tag is-light js-threads-count" data-section="unresolved">0</span>
                     </summary>
                     <div class="drafts-section-body">
                         <ol class="drafts-list js-threads-list" data-section="unresolved"></ol>
-                        <p class="drafts-empty js-threads-empty" data-section="unresolved">No open comment threads in Bitbucket.</p>
+                        <p class="drafts-empty js-threads-empty" data-section="unresolved">No other open comment threads in Bitbucket.</p>
                     </div>
                 </details>
                 <details class="drafts-section js-drafts-section" data-section="resolved">
