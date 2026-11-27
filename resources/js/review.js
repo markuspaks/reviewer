@@ -134,10 +134,16 @@ if (review) {
         refreshThreads();
     };
 
+    // The section of the comments column a thread is listed in.
+    const threadSection = (thread) => {
+        if (thread.classList.contains('is-unsent')) {
+            return 'unsent';
+        }
+        return thread.classList.contains('is-resolved') ? 'resolved' : 'unresolved';
+    };
+
     // The threads already in Bitbucket, unresolved and resolved, listed like the unsent comments.
-    const threadsIn = (section) => [...review.querySelectorAll(
-        section === 'resolved' ? '.thread.is-resolved' : '.thread:not(.is-unsent):not(.is-resolved)',
-    )];
+    const threadsIn = (section) => [...review.querySelectorAll('.thread')].filter((thread) => threadSection(thread) === section);
 
     const refreshThreads = () => {
         ['unresolved', 'resolved'].forEach((section) => {
@@ -166,21 +172,35 @@ if (review) {
             review.querySelector(`.js-threads-count[data-section="${section}"]`).textContent = items.length;
             review.querySelector(`.js-threads-empty[data-section="${section}"]`).hidden = items.length > 0;
         });
+        applyFolding();
     };
 
     const showThread = (thread) => {
-        if (hideSent.checked && !thread.querySelector('.comment.is-unsent')) {
-            // Hidden by the filter: show the sent comments again to get to it.
-            hideSent.checked = false;
-            hideSent.dispatchEvent(new Event('change'));
-        }
         if (thread.classList.contains('is-resolved')) {
             expandThread(thread, true);
         }
         showComment(thread.querySelector(':scope > .comment'));
     };
 
+    // A comment hidden because its section of the comments column is folded up: unfold the section to get to it.
+    const unfoldTo = (comment) => {
+        const thread = comment.closest('.thread');
+        const open = [];
+        if (thread?.classList.contains('is-folded')) {
+            open.push(threadSection(thread));
+        }
+        if (comment.classList.contains('is-unsent')) {
+            open.push('unsent');
+        }
+        open.forEach((name) => {
+            review.querySelector(`.js-drafts-section[data-section="${name}"]`).open = true;
+        });
+        // Opening fires "toggle" only later; the comment is scrolled to right away.
+        applyFolding();
+    };
+
     const showComment = (comment) => {
+        unfoldTo(comment);
         const file = comment.closest('.diff-file');
         file?.classList.remove('is-collapsed');
         if (file && comment.closest('.diff-expanded') && fileView(file) === 'diff') {
@@ -392,25 +412,25 @@ if (review) {
         location.reload();
     };
 
-    const hideSent = review.querySelector('.js-hide-sent');
-    const applyHideSent = () => review.classList.toggle('hide-sent', hideSent.checked);
-    try {
-        hideSent.checked = localStorage.getItem('review.hideSent') === '1';
-    } catch {
-        // Storage blocked: start unchecked.
-    }
-    applyHideSent();
-    hideSent.addEventListener('change', () => {
-        applyHideSent();
-        try {
-            localStorage.setItem('review.hideSent', hideSent.checked ? '1' : '0');
-        } catch {
-            // Not remembered.
-        }
-    });
-
-    // The sections of the comments column fold up; which are open is remembered.
-    review.querySelectorAll('.js-drafts-section').forEach((section) => {
+    // The sections of the comments column fold up; which are open is remembered. A folded section hides its
+    // threads on the diff too, except one with an unsent comment or a form open in it; see the CSS.
+    const sections = [...review.querySelectorAll('.js-drafts-section')];
+    const applyFolding = () => {
+        const folded = {};
+        sections.forEach((section) => {
+            folded[section.dataset.section] = !section.open;
+            review.classList.toggle(`hide-${section.dataset.section}`, !section.open);
+        });
+        review.querySelectorAll('.thread').forEach((thread) => {
+            const section = threadSection(thread);
+            const kept = thread.querySelector(section === 'unsent' ? '.comment-form' : '.comment.is-unsent, .comment-form');
+            thread.classList.toggle('is-folded', folded[section] && !kept);
+        });
+        review.querySelectorAll('.comments-row').forEach((row) => {
+            row.classList.toggle('is-folded', !row.querySelector('.thread:not(.is-folded)'));
+        });
+    };
+    sections.forEach((section) => {
         const key = `review.section.${section.dataset.section}`;
         try {
             const saved = localStorage.getItem(key);
@@ -421,6 +441,7 @@ if (review) {
             // Storage blocked: the default.
         }
         section.addEventListener('toggle', () => {
+            applyFolding();
             try {
                 localStorage.setItem(key, section.open ? '1' : '0');
             } catch {

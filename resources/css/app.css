@@ -939,17 +939,14 @@ body.is-resizing-review {
     background: rgba(51, 154, 240, 0.08);
 }
 
-/* "Hide comments already in Bitbucket": only threads with an unsent comment stay, with the comment replied to. */
-.review.hide-sent .thread:not(:has(.comment.is-unsent, .comment-form)),
-.review.hide-sent .replies .comment:not(.is-unsent),
-.review.hide-sent .comments-row:not(:has(.comment.is-unsent, .comment-form)) {
+/* A section of the comments column folded up hides its threads on the diff too (review.js marks them). A thread
+   with an unsent comment or a form open stays, with only the comment replied to; a row with nothing left to show goes. */
+.thread.is-folded,
+.comments-row.is-folded:not(:has(.comment-form)),
+.review.hide-unsent .thread:not(.is-unsent) .replies .comment.is-unsent:not(:has(.comment-form)),
+.review.hide-unresolved .thread:not(.is-unsent, .is-resolved) .replies .comment:not(.is-unsent),
+.review.hide-resolved .thread.is-resolved .replies .comment:not(.is-unsent) {
     display: none;
-}
-
-.drafts-filter {
-    display: block;
-    margin-top: 10px;
-    font-size: 0.85em;
 }
 
 .drafts-bitbucket {

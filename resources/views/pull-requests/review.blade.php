@@ -227,10 +227,6 @@
                         <p class="drafts-empty js-drafts-empty">Click <strong>+</strong> next to a line to comment. Comments are saved here, visible only to you, until you send them.</p>
                         <button type="button" class="button is-primary is-small is-fullwidth js-publish" disabled>Send to Bitbucket</button>
                         <p class="help js-publish-help">Adds them all at once to your draft review in Bitbucket. Others see them only after you finish the review there.</p>
-                        <label class="checkbox drafts-filter">
-                            <input type="checkbox" class="js-hide-sent">
-                            Hide comments already in Bitbucket
-                        </label>
                         @if($comments->bitbucketDraftCount)
                             <div class="drafts-bitbucket">
                                 <p class="help">
